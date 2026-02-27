@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { Habit, HabitStreak } from '../types'
+import type { Habit, HabitHistoryEntry, HabitStreak } from '../types'
 
 export const habitsApi = {
   list: () => apiFetch<Habit[]>('/habits'),
@@ -25,4 +25,6 @@ export const habitsApi = {
   },
 
   streak: (id: string) => apiFetch<HabitStreak>(`/habits/${id}/streak`),
+
+  history: () => apiFetch<HabitHistoryEntry[]>('/habits/history'),
 }

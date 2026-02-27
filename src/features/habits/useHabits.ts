@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { habitsApi } from '../../api/habits'
 
+export function useHabitHistory() {
+  return useQuery({
+    queryKey: ['habits', 'history'],
+    queryFn: habitsApi.history,
+  })
+}
+
 export function useHabits() {
   return useQuery({
     queryKey: ['habits'],

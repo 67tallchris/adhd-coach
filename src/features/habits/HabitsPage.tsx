@@ -1,9 +1,58 @@
 import { useState } from 'react'
 import { CheckSquare, Plus, Flame, Trash2 } from 'lucide-react'
 import clsx from 'clsx'
-import { useHabits, useCreateHabit, useCheckHabit, useUncheckHabit, useDeleteHabit, useHabitStreak } from './useHabits'
+import { useHabits, useCreateHabit, useCheckHabit, useUncheckHabit, useDeleteHabit, useHabitStreak, useHabitHistory } from './useHabits'
 import { useGoals } from '../goals/useGoals'
 import type { Habit } from '../../types'
+
+function WeeklyGraph() {
+  const { data: history = [] } = useHabitHistory()
+  const { data: habits = [] } = useHabits()
+  const total = habits.length
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const date = d.toISOString().slice(0, 10)
+    const label = d.toLocaleDateString('en-US', { weekday: 'short' })
+    const isToday = i === 6
+    const entry = history.find(h => h.date === date)
+    return { date, label, count: entry?.count ?? 0, isToday }
+  })
+
+  const max = Math.max(total, ...days.map(d => d.count), 1)
+
+  return (
+    <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4 mb-6">
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Last 7 Days</p>
+      <div className="flex items-end gap-1.5 h-20">
+        {days.map(day => (
+          <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+            <span className="text-xs text-gray-500 h-4 flex items-center">
+              {day.count > 0 ? day.count : ''}
+            </span>
+            <div className="w-full relative" style={{ height: '48px' }}>
+              <div className="absolute inset-x-0 bottom-0 bg-gray-700/40 rounded-sm" style={{ height: '48px' }} />
+              <div
+                className={clsx(
+                  'absolute inset-x-0 bottom-0 rounded-sm transition-all duration-500',
+                  day.isToday ? 'bg-brand-500' : 'bg-green-600/80',
+                )}
+                style={{ height: `${(day.count / max) * 48}px` }}
+              />
+            </div>
+            <span className={clsx(
+              'text-xs',
+              day.isToday ? 'text-brand-400 font-medium' : 'text-gray-600',
+            )}>
+              {day.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function StreakBadge({ habitId }: { habitId: string }) {
   const { data: streak } = useHabitStreak(habitId)
@@ -174,6 +223,8 @@ export default function HabitsPage() {
           <span className="text-sm text-gray-400 shrink-0">{completedCount}/{habits.length} done</span>
         </div>
       )}
+
+      <WeeklyGraph />
 
       {showForm && <HabitForm onClose={() => setShowForm(false)} />}
 

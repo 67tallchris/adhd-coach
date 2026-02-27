@@ -49,6 +49,11 @@ export interface HabitStreak {
   totalDays: number
 }
 
+export interface HabitHistoryEntry {
+  date: string
+  count: number
+}
+
 export interface PomodoroSession {
   id: string
   taskId: string | null

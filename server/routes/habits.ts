@@ -6,6 +6,19 @@ import { habits, habitCompletions } from '../db/schema'
 type Env = { Bindings: { DB: D1Database } }
 const router = new Hono<Env>()
 
+// 7-day completion history (must be before /:id routes)
+router.get('/history', async (c) => {
+  const db = getDb(c.env.DB)
+  const rows = await db
+    .select({ date: habitCompletions.date, count: sql<number>`count(*)` })
+    .from(habitCompletions)
+    .where(sql`${habitCompletions.date} >= date('now', '-6 days')`)
+    .groupBy(habitCompletions.date)
+    .orderBy(habitCompletions.date)
+
+  return c.json(rows)
+})
+
 // List habits with today's completion status
 router.get('/', async (c) => {
   const db = getDb(c.env.DB)
