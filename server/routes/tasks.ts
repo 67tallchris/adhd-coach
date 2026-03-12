@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { eq, and, sql } from 'drizzle-orm'
 import { getDb } from '../db/index'
-import { tasks } from '../db/schema'
+import { tasks, devices } from '../db/schema'
+import { sendTaskReminderNotification, sendTaskDueSoonNotification } from '../services/fcm'
 
 type Env = { Bindings: { DB: D1Database } }
 
@@ -134,6 +135,31 @@ router.post('/:id/complete', async (c) => {
 
   if (!row) return c.json({ error: 'not found' }, 404)
   return c.json(row)
+})
+
+// Send task reminder (manual trigger)
+router.post('/:id/remind', async (c) => {
+  const db = getDb(c.env.DB)
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, c.req.param('id')))
+  
+  if (!task) return c.json({ error: 'not found' }, 404)
+
+  // Get all registered devices
+  const allDevices = await db.select({ fcmToken: devices.fcmToken }).from(devices)
+  
+  // Send notifications
+  await Promise.all(
+    allDevices.map(device =>
+      sendTaskReminderNotification(device.fcmToken, {
+        id: task.id,
+        title: task.title,
+        description: task.notes,
+        dueDate: null,
+      })
+    )
+  )
+
+  return c.json({ ok: true, sent: allDevices.length })
 })
 
 export default router

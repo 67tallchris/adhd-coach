@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { eq, sql, desc } from 'drizzle-orm'
 import { getDb } from '../db/index'
-import { pomodoroSessions } from '../db/schema'
+import { pomodoroSessions, devices } from '../db/schema'
+import { sendPomodoroCompleteNotification } from '../services/fcm'
 
 type Env = { Bindings: { DB: D1Database } }
 const router = new Hono<Env>()
@@ -44,6 +45,25 @@ router.patch('/sessions/:id', async (c) => {
     .returning()
 
   if (!row) return c.json({ error: 'not found' }, 404)
+
+  // Send push notification if session was completed
+  if (body.completedAt) {
+    // Get all registered devices (for single-user app, send to all)
+    const allDevices = await db.select({ fcmToken: devices.fcmToken }).from(devices)
+    
+    // Send notifications in parallel
+    await Promise.all(
+      allDevices.map(device => 
+        sendPomodoroCompleteNotification(device.fcmToken, {
+          id: row.id,
+          durationMin: row.durationMin,
+          taskId: row.taskId,
+          completedAt: row.completedAt,
+        })
+      )
+    )
+  }
+
   return c.json(row)
 })
 

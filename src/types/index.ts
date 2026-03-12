@@ -76,3 +76,23 @@ export interface Nudge {
   isRead: boolean
   createdAt: string
 }
+
+export interface StreakMilestone {
+  sessions: number
+  unlocked: boolean
+}
+
+export interface StreakStats {
+  currentStreak: number
+  weeklyGoal: number
+  progress: number
+  isOnTrack: boolean
+  bestStreak: number
+  totalSessions: number
+  lastWeekCount: number
+  milestones: StreakMilestone[]
+}
+
+export interface HabitStreakStats extends StreakStats {
+  completionsThisWeek: number
+}

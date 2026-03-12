@@ -62,6 +62,17 @@ export const pomodoroSessions = sqliteTable('pomodoro_sessions', {
   index('idx_pomo_started').on(t.startedAt),
 ])
 
+export const streakConfig = sqliteTable('streak_config', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  type: text('type', { enum: ['pomodoro', 'habits', 'tasks'] }).notNull(),
+  weeklyGoal: integer('weekly_goal').notNull().default(5),
+  timezone: text('timezone').notNull().default('UTC'),
+  createdAt: text('created_at').notNull().default(now()),
+  updatedAt: text('updated_at').notNull().default(now()),
+}, (t) => [
+  index('idx_streak_type').on(t.type),
+])
+
 export const nudges = sqliteTable('nudges', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
   content: text('content').notNull(),
@@ -70,6 +81,31 @@ export const nudges = sqliteTable('nudges', {
   createdAt: text('created_at').notNull().default(now()),
 }, (t) => [
   index('idx_nudges_created').on(t.createdAt),
+])
+
+export const devices = sqliteTable('devices', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  userId: text('user_id'),
+  fcmToken: text('fcm_token').notNull(),
+  platform: text('platform', { enum: ['android', 'ios', 'web'] }).notNull().default('android'),
+  createdAt: text('created_at').notNull().default(now()),
+  lastActiveAt: text('last_active_at'),
+}, (t) => [
+  index('idx_devices_user').on(t.userId),
+  index('idx_devices_token').on(t.fcmToken),
+])
+
+export const bodyDoublingSessions = sqliteTable('body_doubling_sessions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  sessionId: text('session_id').notNull(), // Anonymous session ID, rotated hourly
+  startedAt: text('started_at').notNull(),
+  lastHeartbeat: text('last_heartbeat').notNull(),
+  taskType: text('task_type', { enum: ['work', 'break'] }).notNull().default('work'),
+  region: text('region'), // Coarse region (e.g., "US", "EU") - optional
+}, (t) => [
+  index('idx_body_session').on(t.sessionId),
+  index('idx_body_heartbeat').on(t.lastHeartbeat),
+  index('idx_body_task_type').on(t.taskType),
 ])
 
 // TypeScript types inferred from schema
@@ -81,4 +117,10 @@ export type Habit = typeof habits.$inferSelect
 export type NewHabit = typeof habits.$inferInsert
 export type HabitCompletion = typeof habitCompletions.$inferSelect
 export type PomodoroSession = typeof pomodoroSessions.$inferSelect
+export type StreakConfig = typeof streakConfig.$inferSelect
+export type NewStreakConfig = typeof streakConfig.$inferInsert
 export type Nudge = typeof nudges.$inferSelect
+export type Device = typeof devices.$inferSelect
+export type NewDevice = typeof devices.$inferInsert
+export type BodyDoublingSession = typeof bodyDoublingSessions.$inferSelect
+export type NewBodyDoublingSession = typeof bodyDoublingSessions.$inferInsert

@@ -1,16 +1,126 @@
-import { useEffect, useRef } from 'react'
-import { Timer, Play, Square, RotateCcw } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Timer, Play, Square, RotateCcw, Settings, BellOff, Check, Flame } from 'lucide-react'
 import clsx from 'clsx'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePomodoroStore } from '../../stores/pomodoroStore'
 import { pomodoroApi } from '../../api/pomodoro'
 import { useTasks } from '../brain-dump/useTasks'
 import { useQuery } from '@tanstack/react-query'
+import { BreakSuggestions } from './BreakSuggestions'
+import { StreakCard } from '../../components/StreakCard'
+import { streaksApi } from '../../api/streaks'
+import { BodyDoublingIndicator } from '../../components/BodyDoublingIndicator'
+import { useBodyDoublingStore } from '../../stores/bodyDoublingStore'
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
   const s = (seconds % 60).toString().padStart(2, '0')
   return `${m}:${s}`
+}
+
+function SettingsPanel({ onClose }: { onClose: () => void }) {
+  const store = usePomodoroStore()
+  const { settings, updateSettings } = store
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Timer Settings
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+            <Check className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Work Duration */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Work Session Duration: {settings.workDurationMin} min
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="60"
+              value={settings.workDurationMin}
+              onChange={e => updateSettings({ workDurationMin: parseInt(e.target.value) })}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-500"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1 min</span>
+              <span>60 min</span>
+            </div>
+          </div>
+
+          {/* Break Duration */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Break Duration: {settings.breakDurationMin} min
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              value={settings.breakDurationMin}
+              onChange={e => updateSettings({ breakDurationMin: parseInt(e.target.value) })}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-500"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1 min</span>
+              <span>30 min</span>
+            </div>
+          </div>
+
+          {/* Auto-start Breaks */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-gray-300">Auto-start Breaks</label>
+              <p className="text-xs text-gray-500 mt-0.5">Automatically start break timer after work session</p>
+            </div>
+            <button
+              onClick={() => updateSettings({ autoStartBreaks: !settings.autoStartBreaks })}
+              className={clsx(
+                'relative w-12 h-6 rounded-full transition-colors',
+                settings.autoStartBreaks ? 'bg-brand-600' : 'bg-gray-700'
+              )}
+            >
+              <div
+                className={clsx(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.autoStartBreaks ? 'left-7' : 'left-1'
+                )}
+              />
+            </button>
+          </div>
+
+          {/* Notifications */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-gray-300">Browser Notifications</label>
+              <p className="text-xs text-gray-500 mt-0.5">Get notified when timer completes</p>
+            </div>
+            <button
+              onClick={() => updateSettings({ notificationsEnabled: !settings.notificationsEnabled })}
+              className={clsx(
+                'relative w-12 h-6 rounded-full transition-colors',
+                settings.notificationsEnabled ? 'bg-brand-600' : 'bg-gray-700'
+              )}
+            >
+              <div
+                className={clsx(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.notificationsEnabled ? 'left-7' : 'left-1'
+                )}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function SessionHistory() {
@@ -22,11 +132,28 @@ function SessionHistory() {
     queryKey: ['pomodoro', 'stats'],
     queryFn: pomodoroApi.stats,
   })
+  const { data: streakStats } = useQuery({
+    queryKey: ['streaks', 'pomodoro'],
+    queryFn: streaksApi.getPomodoroStreak,
+    refetchInterval: 30000, // Refresh every 30s
+  })
 
-  if (sessions.length === 0) return null
+  if (sessions.length === 0 && !streakStats) return null
 
   return (
     <div className="mt-8">
+      {/* Streak Card */}
+      {streakStats && (
+        <div className="mb-6">
+          <StreakCard
+            stats={streakStats}
+            title="Focus Streak"
+            subtitle="Complete pomodoro sessions this week"
+            icon={<Flame className="w-5 h-5" />}
+          />
+        </div>
+      )}
+
       {stats && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
@@ -72,6 +199,36 @@ export default function PomodoroPage() {
   const qc = useQueryClient()
   const { data: tasks = [] } = useTasks({ status: 'inbox' })
   const intervalRef = useRef<number | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+
+  const { settings, isBreak, sessionId } = store
+  const bodyDoubling = useBodyDoublingStore()
+
+  // Sync body doubling task type with pomodoro state
+  useEffect(() => {
+    if (bodyDoubling.isEnabled && bodyDoubling.sessionId) {
+      const newTaskType = isBreak ? 'break' : 'work'
+      if (bodyDoubling.currentTaskType !== newTaskType) {
+        bodyDoubling.updateTaskType(newTaskType)
+      }
+    }
+  }, [isBreak, bodyDoubling.isEnabled, bodyDoubling.sessionId])
+
+  // Start/stop heartbeat based on body doubling enabled state
+  useEffect(() => {
+    if (bodyDoubling.isEnabled) {
+      bodyDoubling.startHeartbeat()
+    } else {
+      bodyDoubling.stopHeartbeat()
+    }
+    return () => {
+      bodyDoubling.stopHeartbeat()
+    }
+  }, [bodyDoubling.isEnabled])
+
+  useEffect(() => {
+    store.requestNotificationPermission()
+  }, [])
 
   const progress = store.durationSec > 0
     ? (store.remainingSec / store.durationSec) * 100
@@ -91,30 +248,40 @@ export default function PomodoroPage() {
 
   // Auto-complete when timer hits 0
   useEffect(() => {
-    if (isDone && store.sessionId) {
-      pomodoroApi.update(store.sessionId, { completedAt: new Date().toISOString() })
+    if (isDone && sessionId && !isBreak) {
+      pomodoroApi.update(sessionId, { completedAt: new Date().toISOString() })
         .then(() => {
           qc.invalidateQueries({ queryKey: ['pomodoro'] })
           store.stop()
         })
         .catch(console.error)
     }
-  }, [isDone])
+  }, [isDone, sessionId, isBreak])
 
   async function handleStart() {
-    const session = await pomodoroApi.create({
-      taskId: store.linkedTaskId ?? undefined,
-      durationMin: 25,
-    })
-    store.startTimer(session.id, 25, store.linkedTaskId ?? undefined)
+    if (isBreak) {
+      // Starting a break
+      store.startBreak(settings.breakDurationMin)
+    } else {
+      // Starting work session
+      const session = await pomodoroApi.create({
+        taskId: store.linkedTaskId ?? undefined,
+        durationMin: settings.workDurationMin,
+      })
+      store.startTimer(session.id, settings.workDurationMin, store.linkedTaskId ?? undefined)
+    }
   }
 
   async function handleStop() {
-    if (store.sessionId) {
-      await pomodoroApi.update(store.sessionId, {})
+    if (sessionId && !isBreak) {
+      await pomodoroApi.update(sessionId, {})
       qc.invalidateQueries({ queryKey: ['pomodoro'] })
     }
     store.stop()
+    store.reset()
+  }
+
+  function handleSkipBreak() {
     store.reset()
   }
 
@@ -123,12 +290,32 @@ export default function PomodoroPage() {
 
   return (
     <div>
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+
+      {/* Body Doubling */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Timer className="w-5 h-5 text-brand-400" />
-          Pomodoro
-        </h2>
-        <p className="text-sm text-gray-500 mt-0.5">Focus in 25-minute blocks</p>
+        <BodyDoublingIndicator />
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Timer className="w-5 h-5 text-brand-400" />
+              Pomodoro
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {isBreak ? 'Break time' : 'Focus in 25-minute blocks'}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            title="Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col items-center">
@@ -138,7 +325,7 @@ export default function PomodoroPage() {
             <circle cx="100" cy="100" r="90" fill="none" stroke="#1f2937" strokeWidth="8" />
             <circle
               cx="100" cy="100" r="90" fill="none"
-              stroke={store.remainingSec === 0 ? '#22c55e' : '#4f5bff'}
+              stroke={isBreak ? '#22c55e' : store.remainingSec === 0 ? '#22c55e' : '#4f5bff'}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -151,13 +338,18 @@ export default function PomodoroPage() {
               {formatTime(store.remainingSec)}
             </span>
             <span className="text-xs text-gray-500 mt-1">
-              {store.isRunning ? 'Focus time' : store.remainingSec < store.durationSec ? 'Paused' : 'Ready'}
+              {isBreak ? 'Break' : store.isRunning ? 'Focus time' : store.remainingSec < store.durationSec ? 'Paused' : 'Ready'}
             </span>
+            {isBreak && (
+              <span className="text-xs text-green-400 mt-1 font-medium">
+                Break Time
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Task link */}
-        {!store.isRunning && (
+        {/* Task link - only show during work sessions */}
+        {!store.isRunning && !isBreak && (
           <div className="mb-4 w-full max-w-xs">
             <select
               value={store.linkedTaskId ?? ''}
@@ -177,13 +369,11 @@ export default function PomodoroPage() {
               onClick={handleStart}
               className={clsx(
                 'flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-white transition-colors',
-                store.remainingSec < store.durationSec
-                  ? 'bg-brand-600 hover:bg-brand-500'
-                  : 'bg-brand-600 hover:bg-brand-500',
+                isBreak ? 'bg-green-600 hover:bg-green-500' : 'bg-brand-600 hover:bg-brand-500',
               )}
             >
               <Play className="w-5 h-5" />
-              {store.remainingSec < store.durationSec ? 'Resume' : 'Start'}
+              {isBreak ? 'Start Break' : store.remainingSec < store.durationSec ? 'Resume' : 'Start'}
             </button>
           ) : (
             <button
@@ -203,12 +393,32 @@ export default function PomodoroPage() {
               <RotateCcw className="w-5 h-5" />
             </button>
           )}
+          {isBreak && !store.isRunning && (
+            <button
+              onClick={handleSkipBreak}
+              className="p-3 rounded-xl text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+              title="Skip Break"
+            >
+              <BellOff className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {isDone && (
           <div className="mt-4 text-green-400 font-medium animate-pulse">
-            Time's up! Great focus session.
+            {isBreak ? 'Break complete! Ready to focus?' : "Time's up! Great focus session."}
           </div>
+        )}
+
+        {/* Break suggestions - show during breaks */}
+        {isBreak && (
+          <BreakSuggestions
+            breakDurationMin={settings.breakDurationMin}
+            onActivitySelect={(activity) => {
+              console.log('Completed activity:', activity)
+              // Could add tracking/analytics here
+            }}
+          />
         )}
       </div>
 

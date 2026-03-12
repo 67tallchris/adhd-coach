@@ -27,7 +27,13 @@ export function useCreateHabit() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: habitsApi.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['habits'] })
+    },
+    onError: (error) => {
+      console.error('Failed to create habit:', error)
+      alert(`Failed to create habit: ${error.message}`)
+    },
   })
 }
 
@@ -53,6 +59,10 @@ export function useCheckHabit() {
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date?: string }) => habitsApi.check(id, date),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+    onError: (error) => {
+      console.error('Failed to check habit:', error)
+      alert(`Failed to check habit: ${error.message}`)
+    },
   })
 }
 
@@ -61,5 +71,9 @@ export function useUncheckHabit() {
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date?: string }) => habitsApi.uncheck(id, date),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+    onError: (error) => {
+      console.error('Failed to uncheck habit:', error)
+      alert(`Failed to uncheck habit: ${error.message}`)
+    },
   })
 }

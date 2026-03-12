@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { CheckSquare, Plus, Flame, Trash2 } from 'lucide-react'
+import { CheckSquare, Plus, Flame, Trash2, Target } from 'lucide-react'
 import clsx from 'clsx'
 import { useHabits, useCreateHabit, useCheckHabit, useUncheckHabit, useDeleteHabit, useHabitStreak, useHabitHistory } from './useHabits'
 import { useGoals } from '../goals/useGoals'
 import type { Habit } from '../../types'
+import { StreakCard } from '../../components/StreakCard'
+import { useQuery } from '@tanstack/react-query'
+import { streaksApi } from '../../api/streaks'
 
 function WeeklyGraph() {
   const { data: history = [] } = useHabitHistory()
@@ -136,12 +139,20 @@ function HabitForm({ onClose }: { onClose: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) return
-    await createHabit.mutateAsync({
-      title: title.trim(),
-      description: description || undefined,
-      goalId: goalId || undefined,
-    })
-    onClose()
+    try {
+      await createHabit.mutateAsync({
+        title: title.trim(),
+        description: description || undefined,
+        goalId: goalId || undefined,
+      })
+      setTitle('')
+      setDescription('')
+      setGoalId('')
+      onClose()
+    } catch (error) {
+      console.error('Failed to create habit:', error)
+      // Error is already shown via onError in useCreateHabit
+    }
   }
 
   return (
@@ -190,6 +201,11 @@ function HabitForm({ onClose }: { onClose: () => void }) {
 export default function HabitsPage() {
   const [showForm, setShowForm] = useState(false)
   const { data: habits = [], isLoading } = useHabits()
+  const { data: streakStats } = useQuery({
+    queryKey: ['streaks', 'habits'],
+    queryFn: streaksApi.getHabitsStreak,
+    refetchInterval: 30000,
+  })
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const completedCount = habits.filter(h => h.completedToday).length
 
@@ -211,6 +227,18 @@ export default function HabitsPage() {
           New Habit
         </button>
       </div>
+
+      {/* Streak Card */}
+      {streakStats && (
+        <div className="mb-6">
+          <StreakCard
+            stats={streakStats}
+            title="Habit Streak"
+            subtitle="Days with habit completions"
+            icon={<Target className="w-5 h-5" />}
+          />
+        </div>
+      )}
 
       {habits.length > 0 && (
         <div className="mb-4 flex items-center gap-3">

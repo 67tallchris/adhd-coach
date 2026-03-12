@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Brain, Plus, Inbox, Clock, CheckCircle } from 'lucide-react'
+import { Brain, Plus, Inbox, Clock, CheckCircle, Target } from 'lucide-react'
 import clsx from 'clsx'
 import type { TaskStatus } from '../../types'
 import { useTasks } from './useTasks'
 import TaskCard from './TaskCard'
 import TaskForm from './TaskForm'
+import { StreakCard } from '../../components/StreakCard'
+import { useQuery } from '@tanstack/react-query'
+import { streaksApi } from '../../api/streaks'
 
 const TABS: { status: TaskStatus; label: string; icon: typeof Inbox }[] = [
   { status: 'inbox', label: 'Inbox', icon: Inbox },
@@ -17,6 +20,11 @@ export default function BrainDumpPage() {
   const [showForm, setShowForm] = useState(false)
 
   const { data: tasks = [], isLoading } = useTasks({ status: activeTab })
+  const { data: streakStats } = useQuery({
+    queryKey: ['streaks', 'tasks'],
+    queryFn: streaksApi.getTasksStreak,
+    refetchInterval: 30000,
+  })
 
   return (
     <div>
@@ -36,6 +44,18 @@ export default function BrainDumpPage() {
           Add Task
         </button>
       </div>
+
+      {/* Streak Card - Only show on Done tab */}
+      {streakStats && activeTab === 'done' && (
+        <div className="mb-6">
+          <StreakCard
+            stats={streakStats}
+            title="Task Completion Streak"
+            subtitle="Tasks completed this week"
+            icon={<Target className="w-5 h-5" />}
+          />
+        </div>
+      )}
 
       {showForm && (
         <div className="mb-4">

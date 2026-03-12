@@ -9,8 +9,11 @@ export const nudgesApi = {
     return apiFetch<Nudge[]>(`/nudges?${q}`)
   },
 
-  generate: (type: NudgeType = 'app_open') =>
-    apiFetch<Nudge>('/nudges/generate', { method: 'POST', body: JSON.stringify({ type }) }),
+  generate: (type: NudgeType = 'app_open', provider: 'claude' | 'qwen' = 'qwen') =>
+    apiFetch<Nudge>('/nudges/generate', {
+      method: 'POST',
+      body: JSON.stringify({ type, provider }),
+    }),
 
   markRead: (id: string) =>
     apiFetch<{ ok: boolean }>(`/nudges/${id}/read`, { method: 'POST', body: JSON.stringify({}) }),

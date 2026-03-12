@@ -1,9 +1,11 @@
 import { Sparkles } from 'lucide-react'
 import { formatDistanceToNow, parseISO } from 'date-fns'
-import { useNudges } from './useNudges'
+import { useNudges, useGenerateNudge } from './useNudges'
 
 export default function NudgesPage() {
   const { data: nudges = [], isLoading } = useNudges(50)
+  const generateQwen = useGenerateNudge('qwen')
+  const generateClaude = useGenerateNudge('claude')
 
   return (
     <div>
@@ -13,6 +15,23 @@ export default function NudgesPage() {
           Nudge History
         </h2>
         <p className="text-sm text-gray-500 mt-0.5">What your coach has said to you</p>
+      </div>
+
+      <div className="mb-6 flex gap-3">
+        <button
+          onClick={() => generateQwen.mutate()}
+          disabled={generateQwen.isPending}
+          className="px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          {generateQwen.isPending ? 'Generating...' : 'Ask Qwen'}
+        </button>
+        <button
+          onClick={() => generateClaude.mutate()}
+          disabled={generateClaude.isPending}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          {generateClaude.isPending ? 'Generating...' : 'Ask Claude'}
+        </button>
       </div>
 
       {isLoading ? (

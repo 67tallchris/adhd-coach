@@ -16,10 +16,10 @@ export function useNudges(limit = 20) {
   })
 }
 
-export function useGenerateNudge() {
+export function useGenerateNudge(provider: 'claude' | 'qwen' = 'qwen') {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => nudgesApi.generate('manual_refresh'),
+    mutationFn: () => nudgesApi.generate('manual_refresh', provider),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['nudges'] }),
   })
 }
