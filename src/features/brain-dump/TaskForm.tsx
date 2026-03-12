@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateTask } from './useTasks'
 import { useGoals } from '../goals/useGoals'
 import type { Priority } from '../../types'
+import { parseNaturalDate, formatDueDate } from '../../utils/parseDueDate'
+import { Calendar, X } from 'lucide-react'
+import clsx from 'clsx'
 
 interface Props {
   onClose?: () => void
@@ -20,10 +23,23 @@ export default function TaskForm({ onClose }: Props) {
   const [priority, setPriority] = useState<Priority>('medium')
   const [goalId, setGoalId] = useState('')
   const [tagsInput, setTagsInput] = useState('')
+  const [dueDateInput, setDueDateInput] = useState('')
+  const [parsedDueDate, setParsedDueDate] = useState<{ date: string; time?: string } | null>(null)
   const [showDetails, setShowDetails] = useState(false)
 
   const createTask = useCreateTask()
   const { data: goals = [] } = useGoals()
+
+  // Parse due date from input
+  useEffect(() => {
+    if (!dueDateInput.trim()) {
+      setParsedDueDate(null)
+      return
+    }
+
+    const parsed = parseNaturalDate(dueDateInput.trim())
+    setParsedDueDate(parsed)
+  }, [dueDateInput])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,11 +52,15 @@ export default function TaskForm({ onClose }: Props) {
       priority,
       goalId: goalId || undefined,
       tags,
+      dueDate: parsedDueDate?.date || null,
+      dueTime: parsedDueDate?.time || null,
     })
 
     setTitle('')
     setNotes('')
     setTagsInput('')
+    setDueDateInput('')
+    setParsedDueDate(null)
     setPriority('medium')
     setGoalId('')
     setShowDetails(false)
@@ -70,6 +90,33 @@ export default function TaskForm({ onClose }: Props) {
             className="w-full bg-gray-900/50 rounded-lg border border-gray-700 p-2 text-sm text-gray-200 placeholder-gray-600 outline-none resize-none"
           />
 
+          {/* Due Date Input */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                value={dueDateInput}
+                onChange={e => setDueDateInput(e.target.value)}
+                placeholder="Due date (e.g., tomorrow, next monday, dec 25, in 3 days)"
+                className="w-full bg-gray-900/50 rounded-lg border border-gray-700 pl-8 pr-8 py-1.5 text-sm text-gray-200 placeholder-gray-600 outline-none"
+              />
+              {dueDateInput && (
+                <button
+                  type="button"
+                  onClick={() => setDueDateInput('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {parsedDueDate && (
+              <span className="text-xs text-brand-400 whitespace-nowrap">
+                {formatDueDate(parsedDueDate.date, parsedDueDate.time)}
+              </span>
+            )}
+          </div>
+
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1">
               <span className="text-xs text-gray-500">Priority:</span>
@@ -78,13 +125,14 @@ export default function TaskForm({ onClose }: Props) {
                   key={p}
                   type="button"
                   onClick={() => setPriority(p)}
-                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                  className={clsx(
+                    'text-xs px-2 py-0.5 rounded-full border transition-colors',
                     priority === p
                       ? p === 'high' ? 'bg-red-900/50 border-red-700 text-red-300'
                         : p === 'medium' ? 'bg-yellow-900/50 border-yellow-700 text-yellow-300'
                         : 'bg-gray-700 border-gray-600 text-gray-300'
                       : 'border-gray-700 text-gray-500 hover:border-gray-500'
-                  }`}
+                  )}
                 >
                   {PRIORITY_LABELS[p]}
                 </button>

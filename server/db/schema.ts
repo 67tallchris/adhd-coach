@@ -21,6 +21,8 @@ export const tasks = sqliteTable('tasks', {
   notes: text('notes'),
   status: text('status', { enum: ['inbox', 'snoozed', 'done'] }).notNull().default('inbox'),
   priority: text('priority', { enum: ['low', 'medium', 'high'] }).notNull().default('medium'),
+  dueDate: text('due_date'),
+  dueTime: text('due_time'),
   snoozeUntil: text('snooze_until'),
   goalId: text('goal_id').references(() => goals.id),
   tags: text('tags').notNull().default('[]'),
@@ -30,6 +32,7 @@ export const tasks = sqliteTable('tasks', {
 }, (t) => [
   index('idx_tasks_status').on(t.status),
   index('idx_tasks_snooze').on(t.snoozeUntil),
+  index('idx_tasks_due').on(t.dueDate),
 ])
 
 export const habits = sqliteTable('habits', {
@@ -57,9 +60,13 @@ export const pomodoroSessions = sqliteTable('pomodoro_sessions', {
   durationMin: integer('duration_min').notNull().default(25),
   startedAt: text('started_at').notNull(),
   completedAt: text('completed_at'),
+  abandonedAt: text('abandoned_at'),
+  actualDurationMin: integer('actual_duration_min'),
   notes: text('notes'),
 }, (t) => [
   index('idx_pomo_started').on(t.startedAt),
+  index('idx_pomo_completed').on(t.completedAt),
+  index('idx_pomo_abandoned').on(t.abandonedAt),
 ])
 
 export const streakConfig = sqliteTable('streak_config', {

@@ -25,6 +25,8 @@ export interface Task {
   notes: string | null
   status: TaskStatus
   priority: Priority
+  dueDate: string | null
+  dueTime: string | null
   snoozeUntil: string | null
   goalId: string | null
   tags: string // JSON array string
@@ -60,6 +62,8 @@ export interface PomodoroSession {
   durationMin: number
   startedAt: string
   completedAt: string | null
+  abandonedAt: string | null
+  actualDurationMin: number | null
   notes: string | null
 }
 
@@ -67,6 +71,9 @@ export interface PomodoroStats {
   today: number
   week: number
   total: number
+  abandonedToday?: number
+  abandonedWeek?: number
+  abandonedTotal?: number
 }
 
 export interface Nudge {

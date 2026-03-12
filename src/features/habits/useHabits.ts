@@ -58,7 +58,16 @@ export function useCheckHabit() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date?: string }) => habitsApi.check(id, date),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+    onSuccess: (_, { id }) => {
+      // Update the cache immediately for responsive UI
+      qc.setQueryData(['habits'], (old: any[] = []) => {
+        return old.map(habit => 
+          habit.id === id ? { ...habit, completedToday: true } : habit
+        )
+      })
+      // Also refetch to ensure data consistency
+      qc.refetchQueries({ queryKey: ['habits'] })
+    },
     onError: (error) => {
       console.error('Failed to check habit:', error)
       alert(`Failed to check habit: ${error.message}`)
@@ -70,7 +79,16 @@ export function useUncheckHabit() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date?: string }) => habitsApi.uncheck(id, date),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+    onSuccess: (_, { id }) => {
+      // Update the cache immediately for responsive UI
+      qc.setQueryData(['habits'], (old: any[] = []) => {
+        return old.map(habit => 
+          habit.id === id ? { ...habit, completedToday: false } : habit
+        )
+      })
+      // Also refetch to ensure data consistency
+      qc.refetchQueries({ queryKey: ['habits'] })
+    },
     onError: (error) => {
       console.error('Failed to uncheck habit:', error)
       alert(`Failed to uncheck habit: ${error.message}`)

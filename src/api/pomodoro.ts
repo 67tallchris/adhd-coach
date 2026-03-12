@@ -7,7 +7,12 @@ export const pomodoroApi = {
   create: (data: { taskId?: string; durationMin?: number }) =>
     apiFetch<PomodoroSession>('/pomodoro/sessions', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: string, data: { completedAt?: string; notes?: string }) =>
+  update: (id: string, data: { 
+    completedAt?: string
+    abandonedAt?: string
+    actualDurationMin?: number
+    notes?: string 
+  }) =>
     apiFetch<PomodoroSession>(`/pomodoro/sessions/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

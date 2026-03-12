@@ -43,6 +43,8 @@ router.post('/', async (c) => {
     priority?: 'low' | 'medium' | 'high'
     goalId?: string
     tags?: string[]
+    dueDate?: string
+    dueTime?: string
   }>()
 
   if (!body.title?.trim()) return c.json({ error: 'title is required' }, 400)
@@ -53,6 +55,8 @@ router.post('/', async (c) => {
     priority: body.priority ?? 'medium',
     goalId: body.goalId,
     tags: JSON.stringify(body.tags ?? []),
+    dueDate: body.dueDate,
+    dueTime: body.dueTime,
   }).returning()
 
   return c.json(row, 201)
@@ -77,6 +81,8 @@ router.patch('/:id', async (c) => {
     goalId: string | null
     tags: string[]
     snoozeUntil: string | null
+    dueDate: string | null
+    dueTime: string | null
   }>>()
 
   const updates: Record<string, unknown> = {
@@ -89,6 +95,8 @@ router.patch('/:id', async (c) => {
   if (body.goalId !== undefined) updates.goalId = body.goalId
   if (body.tags !== undefined) updates.tags = JSON.stringify(body.tags)
   if (body.snoozeUntil !== undefined) updates.snoozeUntil = body.snoozeUntil
+  if (body.dueDate !== undefined) updates.dueDate = body.dueDate
+  if (body.dueTime !== undefined) updates.dueTime = body.dueTime
 
   const [row] = await db.update(tasks)
     .set(updates)

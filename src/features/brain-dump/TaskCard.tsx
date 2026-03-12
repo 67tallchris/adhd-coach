@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Clock, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Clock, Trash2, ChevronDown, ChevronUp, Calendar } from 'lucide-react'
 import clsx from 'clsx'
 import { formatDistanceToNow } from 'date-fns'
 import type { Task } from '../../types'
 import { useCompleteTask, useDeleteTask, useSnoozeTask } from './useTasks'
+import { formatDueDate, isOverdue } from '../../utils/parseDueDate'
 
 const PRIORITY_COLORS = {
   high: 'border-l-red-500',
@@ -35,6 +36,9 @@ export default function TaskCard({ task }: Props) {
     catch { return [] }
   })()
 
+  const hasDueDate = task.dueDate !== null
+  const overdue = hasDueDate && isOverdue(task.dueDate!, task.dueTime)
+
   function snooze(hours: number) {
     const until = new Date(Date.now() + hours * 3600000).toISOString()
     snoozeTask.mutate({ id: task.id, until })
@@ -45,6 +49,7 @@ export default function TaskCard({ task }: Props) {
     <div className={clsx(
       'group bg-gray-800/40 hover:bg-gray-800/60 rounded-xl border border-gray-700/50 border-l-4 transition-all',
       PRIORITY_COLORS[task.priority],
+      overdue && 'ring-1 ring-red-500/50',
     )}>
       <div className="flex items-start gap-3 p-3">
         {/* Complete button */}
@@ -78,14 +83,28 @@ export default function TaskCard({ task }: Props) {
             </div>
           )}
 
-          <p className="text-xs text-gray-600 mt-1">
-            {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}
-          </p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {hasDueDate && (
+              <span className={clsx(
+                'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
+                overdue 
+                  ? 'bg-red-900/30 text-red-400 border border-red-700/30'
+                  : 'bg-brand-900/30 text-brand-400 border border-brand-700/30'
+              )}>
+                <Calendar className="w-3 h-3" />
+                {formatDueDate(task.dueDate!, task.dueTime)}
+                {overdue && ' (Overdue)'}
+              </span>
+            )}
+            <span className="text-xs text-gray-600">
+              {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}
+            </span>
+          </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          {(task.notes || tags.length > 0) && (
+          {(task.notes || tags.length > 0 || hasDueDate) && (
             <button
               onClick={() => setExpanded(!expanded)}
               className="p-1 rounded text-gray-500 hover:text-gray-300"

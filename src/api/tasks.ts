@@ -10,10 +10,28 @@ export const tasksApi = {
     return apiFetch<Task[]>(`/tasks?${q}`)
   },
 
-  create: (data: { title: string; notes?: string; priority?: Priority; goalId?: string; tags?: string[] }) =>
+  create: (data: { 
+    title: string
+    notes?: string
+    priority?: Priority
+    goalId?: string
+    tags?: string[]
+    dueDate?: string | null
+    dueTime?: string | null
+  }) =>
     apiFetch<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: string, data: Partial<{ title: string; notes: string; status: TaskStatus; priority: Priority; goalId: string | null; tags: string[]; snoozeUntil: string | null }>) =>
+  update: (id: string, data: Partial<{ 
+    title: string
+    notes: string
+    status: TaskStatus
+    priority: Priority
+    goalId: string | null
+    tags: string[]
+    snoozeUntil: string | null
+    dueDate: string | null
+    dueTime: string | null
+  }>) =>
     apiFetch<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>

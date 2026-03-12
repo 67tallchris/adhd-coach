@@ -13,12 +13,20 @@ function WeeklyGraph() {
   const { data: habits = [] } = useHabits()
   const total = habits.length
 
+  // Get the current week starting from Monday, ending on Sunday
+  const now = new Date()
+  const currentDay = now.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay // Days since Monday
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + mondayOffset)
+  monday.setHours(0, 0, 0, 0)
+
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
     const date = d.toISOString().slice(0, 10)
     const label = d.toLocaleDateString('en-US', { weekday: 'short' })
-    const isToday = i === 6
+    const isToday = d.toDateString() === now.toDateString()
     const entry = history.find(h => h.date === date)
     return { date, label, count: entry?.count ?? 0, isToday }
   })
