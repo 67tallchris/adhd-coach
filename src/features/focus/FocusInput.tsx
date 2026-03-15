@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { useQueryClient } from '@tanstack/react-query'
 import { useFocusStore } from '../../stores/focusStore'
@@ -21,6 +21,11 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
   const [energy, setEnergy] = useState<'low' | 'medium' | 'high'>('medium')
   const [sleep, setSleep] = useState<'poor' | 'normal' | 'good'>('normal')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Clean up the flash timer on unmount
+  useEffect(() => () => { if (savedTimerRef.current) clearTimeout(savedTimerRef.current) }, [])
 
   const handleSubmit = async (level: number) => {
     setIsSubmitting(true)
@@ -30,20 +35,22 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
         notes || undefined,
         showDetails ? { energy, sleep, mood: [] } : undefined
       )
-      
-      // Award XP for focus check-in
-      const xpAmount = notes ? 30 : 20 // Bonus XP for adding notes
+
+      const xpAmount = notes ? 30 : 20
       await awardXp(
         xpAmount,
         'focus_checkin',
         `Logged focus level: ${FOCUS_LEVELS.find(f => f.level === level)?.label || level}`,
         { focusLevel: level, withNotes: !!notes }
       )
-      
+
       setLastFocusLevel(level)
-      setSelectedLevel(level)
+      setSelectedLevel(null)   // reset emoji selection back to default
       setNotes('')
-      setShowDetails(false)
+      setShowDetails(false)    // collapse optional details
+      setSaved(true)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      savedTimerRef.current = setTimeout(() => setSaved(false), 2500)
       qc.invalidateQueries({ queryKey: ['focus-dashboard'] })
       qc.invalidateQueries({ queryKey: ['focus-daily'] })
       onClose?.()
@@ -74,6 +81,14 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
         </div>
       )}
 
+      {/* Saved confirmation */}
+      {saved && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 text-sm font-medium animate-in fade-in duration-200">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          Focus logged!
+        </div>
+      )}
+
       {/* Focus Level Selection */}
       <div className="mb-4">
         <div className="flex justify-between gap-2">
@@ -96,16 +111,6 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
         </div>
       </div>
 
-      {/* Last Focus Display */}
-      {lastFocusLevel && !selectedLevel && (
-        <div className="mb-4 p-3 bg-gray-800/40 rounded-xl border border-gray-700/40">
-          <p className="text-sm text-gray-400">
-            Last logged: <span className="text-white font-medium">
-              {FOCUS_LEVELS.find(f => f.level === lastFocusLevel)?.emoji} {FOCUS_LEVELS.find(f => f.level === lastFocusLevel)?.label}
-            </span>
-          </p>
-        </div>
-      )}
 
       {/* Expandable Details */}
       <button
