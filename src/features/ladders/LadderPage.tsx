@@ -4,7 +4,10 @@ import clsx from 'clsx'
 import { useLadders } from './useLadders'
 import LadderCard from './LadderCard'
 import LadderBuilder from './LadderBuilder'
+import { LadderDemo } from './LadderDemo'
 import { useLadderStore } from '../../stores/ladderStore'
+
+const DEMO_DISMISSED_KEY = 'ladderDemoSeen'
 
 type TabStatus = 'active' | 'completed' | 'archived'
 
@@ -17,8 +20,21 @@ const TABS: { status: TabStatus; label: string }[] = [
 export default function LadderPage() {
   const [activeTab, setActiveTab] = useState<TabStatus>('active')
   const { openBuilder } = useLadderStore()
+  const [demoDismissed, setDemoDismissed] = useState(
+    () => localStorage.getItem(DEMO_DISMISSED_KEY) === 'true'
+  )
 
   const { data: ladders = [], isLoading } = useLadders({ status: activeTab })
+
+  const handleDismissDemo = () => {
+    localStorage.setItem(DEMO_DISMISSED_KEY, 'true')
+    setDemoDismissed(true)
+  }
+
+  const handleBuildFromDemo = () => {
+    handleDismissDemo()
+    openBuilder()
+  }
 
   return (
     <div>
@@ -67,19 +83,23 @@ export default function LadderPage() {
           ))}
         </div>
       ) : ladders.length === 0 ? (
-        <div className="text-center py-16 text-gray-600">
-          {activeTab === 'active' ? (
-            <>
-              <GitGraph className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium text-gray-500">No ladders yet</p>
-              <p className="text-sm mt-1">Build a ladder to break down big goals into manageable steps.</p>
-            </>
-          ) : activeTab === 'completed' ? (
-            <p>No completed ladders yet.</p>
-          ) : (
-            <p>No archived ladders.</p>
-          )}
-        </div>
+        activeTab === 'active' && !demoDismissed ? (
+          <LadderDemo onDismiss={handleDismissDemo} onBuildLadder={handleBuildFromDemo} />
+        ) : (
+          <div className="text-center py-16 text-gray-600">
+            {activeTab === 'active' ? (
+              <>
+                <GitGraph className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium text-gray-500">No ladders yet</p>
+                <p className="text-sm mt-1">Build a ladder to break down big goals into manageable steps.</p>
+              </>
+            ) : activeTab === 'completed' ? (
+              <p>No completed ladders yet.</p>
+            ) : (
+              <p>No archived ladders.</p>
+            )}
+          </div>
+        )
       ) : (
         <div className="space-y-3">
           {ladders.map(ladder => (
