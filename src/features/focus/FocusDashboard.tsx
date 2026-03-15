@@ -100,7 +100,7 @@ export function FocusDashboard() {
                   <p className="text-sm text-gray-400">{currentFocus?.label}</p>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Logs today</span>
                   <span className="text-white font-medium">{dashboard.today.logs.length}</span>
@@ -111,6 +111,29 @@ export function FocusDashboard() {
                     <span className="text-white font-medium">{Math.round(dashboard.yesterday * 10) / 10}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Individual log entries */}
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {dashboard.today.logs.map((log) => {
+                  const focusInfo = FOCUS_LEVELS.find(f => f.level === log.focusLevel)
+                  return (
+                    <div key={log.id} className="flex items-start gap-2 bg-black/20 rounded-lg px-2.5 py-2">
+                      <span className="text-base leading-none mt-0.5">{focusInfo?.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-gray-300">{focusInfo?.label}</span>
+                          <span className="text-xs text-gray-500 shrink-0">
+                            {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {log.notes && (
+                          <p className="text-xs text-gray-400 mt-0.5 break-words">{log.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </>
           ) : (
