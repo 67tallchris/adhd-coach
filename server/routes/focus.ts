@@ -408,6 +408,7 @@ router.get('/insights', async (c) => {
         .filter(c => c.score !== 0)
         .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
         .slice(0, 5)
+    }
   }
 
   return c.json({

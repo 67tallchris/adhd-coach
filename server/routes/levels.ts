@@ -48,7 +48,7 @@ router.get('/', async (c) => {
     xpToNextLevel,
     nextUnlock: nextUnlock || null,
   })
-}
+})
 
 // Award XP
 router.post('/xp', async (c) => {
