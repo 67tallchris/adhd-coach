@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { TrendingUp, Zap, CheckSquare, AlertCircle, RefreshCw } from 'lucide-react'
+import { TrendingUp, Zap, CheckSquare, AlertCircle, RefreshCw, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { focusApi } from '../../api/focus'
+import { useLevelStore } from '../../stores/levelStore'
+
+const CORRELATIONS_UNLOCK_LEVEL = 3
 
 interface FocusCorrelationsProps {
   days?: number
@@ -9,6 +12,9 @@ interface FocusCorrelationsProps {
 
 export function FocusCorrelations({ days = 30 }: FocusCorrelationsProps) {
   const qc = useQueryClient()
+  const { level: userLevel } = useLevelStore()
+  const levelsNeeded = CORRELATIONS_UNLOCK_LEVEL - (userLevel?.level ?? 0)
+  const isLocked = levelsNeeded > 0
 
   const { data: insights, isLoading: isLoadingInsights } = useQuery({
     queryKey: ['focus-insights', days],
@@ -54,6 +60,28 @@ export function FocusCorrelations({ days = 30 }: FocusCorrelationsProps) {
     if (absScore > 0.3) return 'Strong'
     if (absScore > 0.1) return 'Moderate'
     return 'Weak'
+  }
+
+  if (isLocked) {
+    return (
+      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-gray-700/50 text-gray-500 shrink-0">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-gray-300 mb-1">Focus Correlations</h3>
+            <p className="text-sm text-gray-500 mb-3">
+              Discover which habits and activities boost your focus on high-focus days.
+            </p>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-700/50 border border-gray-600/40 text-xs text-gray-400">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Unlocks in {levelsNeeded} more level{levelsNeeded !== 1 ? 's' : ''} — reach Level {CORRELATIONS_UNLOCK_LEVEL}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (isLoadingInsights) {

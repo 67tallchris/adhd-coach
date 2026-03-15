@@ -1,10 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, Sparkles, TrendingUp, Clock, Zap, Target, CheckSquare, Brain } from 'lucide-react'
+import { Trophy, Sparkles, TrendingUp, Clock, Zap, Target, CheckSquare, Brain, Flag, Lock } from 'lucide-react'
 import clsx from 'clsx'
 import { levelsApi } from '../../api/levels'
 import { TierBadge } from './TierBadge'
 import { NextUnlock } from './NextUnlock'
-import { TIER_INFO, XP_REWARDS } from '../../types/levels'
+import { TIER_INFO, FEATURE_UNLOCKS, XP_REWARDS, type TierType } from '../../types/levels'
+
+const TIER_ORDER: TierType[] = ['wood', 'iron', 'steel', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster']
+
+function getTierLevelRange(tierKey: TierType, index: number): { start: number; end: number | null } {
+  const start = Math.floor(TIER_INFO[tierKey].xpRequired / 100) + 1
+  const nextKey = TIER_ORDER[index + 1]
+  const end = nextKey ? Math.floor((TIER_INFO[nextKey].xpRequired - 1) / 100) + 1 : null
+  return { start, end }
+}
 
 export function LevelDashboard() {
   const { data: level, isLoading } = useQuery({
@@ -202,9 +211,121 @@ export function LevelDashboard() {
 
         <div className="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700/30">
           <p className="text-xs text-blue-300">
-            💡 <strong>Tip:</strong> You also get +{XP_REWARDS.first_win} XP for your first session of the day 
+            💡 <strong>Tip:</strong> You also get +{XP_REWARDS.first_win} XP for your first session of the day
             and bonus XP for daily streaks!
           </p>
+        </div>
+      </div>
+
+      {/* Level Roadmap */}
+      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Flag className="w-5 h-5 text-brand-400" />
+          <h3 className="text-lg font-semibold text-white">Level Roadmap</h3>
+          <span className="text-xs text-gray-500 ml-1">— what you're building towards</span>
+        </div>
+
+        <div className="space-y-3">
+          {TIER_ORDER.map((tierKey, index) => {
+            const info = TIER_INFO[tierKey]
+            const { start, end } = getTierLevelRange(tierKey, index)
+            const isCurrentTier = level.tier === tierKey
+            const currentTierIndex = TIER_ORDER.indexOf(level.tier as TierType)
+            const isCompletedTier = index < currentTierIndex
+            const isFutureTier = index > currentTierIndex
+            const tierUnlocks = FEATURE_UNLOCKS.filter(f => f.level >= start && (end === null || f.level <= end))
+
+            return (
+              <div
+                key={tierKey}
+                className={clsx(
+                  'rounded-xl border p-4 transition-colors',
+                  isCurrentTier && 'border-brand-600/50 bg-brand-900/20',
+                  isCompletedTier && 'border-gray-700/30 bg-gray-900/20 opacity-70',
+                  isFutureTier && 'border-gray-700/20 bg-gray-900/10'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Status indicator */}
+                  <div className={clsx(
+                    'w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm',
+                    isCompletedTier && 'bg-green-700/40 text-green-400',
+                    isCurrentTier && 'bg-brand-600/40 text-brand-300',
+                    isFutureTier && 'bg-gray-700/40 text-gray-500'
+                  )}>
+                    {isCompletedTier ? '✓' : isCurrentTier ? info.emoji : <Lock className="w-3.5 h-3.5" />}
+                  </div>
+
+                  {/* Tier info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={clsx(
+                        'font-semibold text-sm',
+                        isCompletedTier && 'text-gray-400',
+                        isCurrentTier && 'text-white',
+                        isFutureTier && 'text-gray-500'
+                      )}>
+                        {isCurrentTier ? '' : ''}{info.emoji} {info.name}
+                      </span>
+                      <span className={clsx(
+                        'text-xs px-2 py-0.5 rounded-full',
+                        isCurrentTier ? 'bg-brand-700/40 text-brand-300' : 'bg-gray-700/40 text-gray-500'
+                      )}>
+                        Lvl {start}{end ? `–${end}` : '+'}
+                      </span>
+                      {isCurrentTier && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-700/30 text-green-400 font-medium">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <p className={clsx(
+                      'text-xs mt-0.5',
+                      isFutureTier ? 'text-gray-600' : 'text-gray-500'
+                    )}>
+                      {info.description} · {info.xpRequired.toLocaleString()} XP to reach
+                    </p>
+
+                    {/* Feature unlocks for this tier */}
+                    {tierUnlocks.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {tierUnlocks.map(unlock => (
+                          <span
+                            key={unlock.level}
+                            className={clsx(
+                              'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border',
+                              isCompletedTier || (isCurrentTier && level.level >= unlock.level)
+                                ? 'bg-green-900/30 border-green-700/40 text-green-400'
+                                : isFutureTier || (isCurrentTier && level.level < unlock.level)
+                                ? 'bg-gray-800/60 border-gray-700/40 text-gray-500'
+                                : 'bg-gray-800/60 border-gray-700/40 text-gray-500'
+                            )}
+                          >
+                            <span>{unlock.icon}</span>
+                            <span>{unlock.feature}</span>
+                            <span className="opacity-60">Lv.{unlock.level}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Progress bar for current tier */}
+                  {isCurrentTier && (
+                    <div className="shrink-0 w-16 text-right">
+                      <p className="text-xs text-brand-400 font-bold">{level.tierProgress}%</p>
+                      <div className="h-1.5 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-brand-500"
+                          style={{ width: `${level.tierProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
