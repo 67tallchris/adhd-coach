@@ -245,6 +245,8 @@ export default function PomodoroPage() {
   const { data: tasks = [] } = useTasks({ status: 'inbox' })
   const [showSettings, setShowSettings] = useState(false)
   const [showDistractionModal, setShowDistractionModal] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
+  const [isStarting, setIsStarting] = useState(false)
 
   const { settings, isBreak, sessionId } = store
   const bodyDoubling = useBodyDoublingStore()
@@ -350,15 +352,21 @@ export default function PomodoroPage() {
 
   async function handleStart() {
     if (isBreak) {
-      // Starting a break
       store.startBreak(settings.breakDurationMin)
-    } else {
-      // Starting work session
+      return
+    }
+    setIsStarting(true)
+    setStartError(null)
+    try {
       const session = await pomodoroApi.create({
         taskId: store.linkedTaskId ?? undefined,
         durationMin: settings.workDurationMin,
       })
       store.startTimer(session.id, settings.workDurationMin, store.linkedTaskId ?? undefined)
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : 'Failed to start session')
+    } finally {
+      setIsStarting(false)
     }
   }
 
@@ -471,13 +479,14 @@ export default function PomodoroPage() {
           {!store.isRunning ? (
             <button
               onClick={handleStart}
+              disabled={isStarting}
               className={clsx(
-                'flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-white transition-colors',
+                'flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-white transition-colors disabled:opacity-60',
                 isBreak ? 'bg-green-600 hover:bg-green-500' : 'bg-brand-600 hover:bg-brand-500',
               )}
             >
               <Play className="w-5 h-5" />
-              {isBreak ? 'Start Break' : store.remainingSec < store.durationSec ? 'Resume' : 'Start'}
+              {isStarting ? 'Starting…' : isBreak ? 'Start Break' : store.remainingSec < store.durationSec ? 'Resume' : 'Start'}
             </button>
           ) : (
             <button
@@ -512,6 +521,10 @@ export default function PomodoroPage() {
           <div className="mt-4 text-green-400 font-medium animate-pulse">
             {isBreak ? 'Break complete! Ready to focus?' : "Time's up! Great focus session."}
           </div>
+        )}
+
+        {startError && (
+          <p className="mt-3 text-sm text-red-400">{startError}</p>
         )}
 
         {/* Got Distracted button - only show during work sessions */}
