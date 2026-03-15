@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Timer, Play, Square, RotateCcw, Settings, BellOff, Check, Flame } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Timer, Play, Square, RotateCcw, Settings, BellOff, Check, Flame, MessageCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePomodoroStore } from '../../stores/pomodoroStore'
@@ -11,6 +11,10 @@ import { StreakCard } from '../../components/StreakCard'
 import { streaksApi } from '../../api/streaks'
 import { BodyDoublingIndicator } from '../../components/BodyDoublingIndicator'
 import { useBodyDoublingStore } from '../../stores/bodyDoublingStore'
+import { DistractionModal } from './DistractionModal'
+import { DistractionInsights } from './DistractionInsights'
+import { distractionsApi } from '../../api/distractions'
+import type { DistractionAction, DistractionType } from '../../types'
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -180,12 +184,12 @@ function SessionHistory() {
           const isCompleted = session.completedAt !== null
           const isAbandoned = session.abandonedAt !== null
           const actualMin = session.actualDurationMin || (isCompleted ? session.durationMin : 0)
-          
+
           return (
             <div key={session.id} className={clsx(
               'flex items-center justify-between p-3 rounded-lg border',
-              isCompleted 
-                ? 'bg-green-900/10 border-green-800/30' 
+              isCompleted
+                ? 'bg-green-900/10 border-green-800/30'
                 : isAbandoned
                   ? 'bg-orange-900/10 border-orange-800/30'
                   : 'bg-gray-800/30 border-gray-700/40'
@@ -226,6 +230,11 @@ function SessionHistory() {
           )
         })}
       </div>
+
+      {/* Distraction Insights */}
+      <div className="mt-8 pt-6 border-t border-gray-700/50">
+        <DistractionInsights />
+      </div>
     </div>
   )
 }
@@ -234,11 +243,59 @@ export default function PomodoroPage() {
   const store = usePomodoroStore()
   const qc = useQueryClient()
   const { data: tasks = [] } = useTasks({ status: 'inbox' })
-  const intervalRef = useRef<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showDistractionModal, setShowDistractionModal] = useState(false)
 
   const { settings, isBreak, sessionId } = store
   const bodyDoubling = useBodyDoublingStore()
+
+  // Calculate time remaining for display
+  const timeRemaining = store.isRunning && !isBreak
+    ? formatTime(store.remainingSec)
+    : undefined
+
+  // Handle distraction logging
+  const handleDistraction = async (data: {
+    distractionType: DistractionType
+    notes?: string
+    action: DistractionAction
+  }) => {
+    if (!sessionId) return
+
+    const timeElapsed = store.durationSec - store.remainingSec
+
+    // Log the distraction
+    await distractionsApi.log({
+      sessionId,
+      distractionType: data.distractionType,
+      notes: data.notes,
+      action: data.action,
+      timeElapsed,
+    })
+
+    // Handle the selected action
+    if (data.action === 'resumed') {
+      // Just close modal and continue
+      store.startTimer(sessionId, settings.workDurationMin, store.linkedTaskId ?? undefined)
+    } else if (data.action === 'restarted') {
+      // Stop current and start fresh
+      store.reset()
+      store.startTimer(sessionId, settings.workDurationMin, store.linkedTaskId ?? undefined)
+    } else if (data.action === 'took_break') {
+      // Switch to break mode
+      store.stop()
+      store.startBreak(settings.breakDurationMin)
+    } else if (data.action === 'abandoned') {
+      // End session
+      await pomodoroApi.update(sessionId, {
+        abandonedAt: new Date().toISOString(),
+        actualDurationMin: Math.max(1, Math.round(timeElapsed / 60)),
+      })
+      qc.invalidateQueries({ queryKey: ['pomodoro'] })
+      store.stop()
+      store.reset()
+    }
+  }
 
   // Sync body doubling task type with pomodoro state
   useEffect(() => {
@@ -262,6 +319,24 @@ export default function PomodoroPage() {
     }
   }, [bodyDoubling.isEnabled])
 
+  // Keyboard shortcut for distraction modal (D key)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'd' || e.key === 'D') {
+        // Don't trigger if typing in an input
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+          return
+        }
+        if (!isBreak && store.isRunning) {
+          setShowDistractionModal(true)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isBreak, store.isRunning])
+
   useEffect(() => {
     store.requestNotificationPermission()
   }, [])
@@ -272,27 +347,6 @@ export default function PomodoroPage() {
 
   const isDone = store.isRunning && store.remainingSec === 0
 
-  // Tick interval
-  useEffect(() => {
-    if (store.isRunning && store.remainingSec > 0) {
-      intervalRef.current = window.setInterval(() => store.tick(), 1000)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [store.isRunning, store.remainingSec])
-
-  // Auto-complete when timer hits 0
-  useEffect(() => {
-    if (isDone && sessionId && !isBreak) {
-      pomodoroApi.update(sessionId, { completedAt: new Date().toISOString() })
-        .then(() => {
-          qc.invalidateQueries({ queryKey: ['pomodoro'] })
-          store.stop()
-        })
-        .catch(console.error)
-    }
-  }, [isDone, sessionId, isBreak])
 
   async function handleStart() {
     if (isBreak) {
@@ -310,15 +364,12 @@ export default function PomodoroPage() {
 
   async function handleStop() {
     if (sessionId && !isBreak) {
-      // Calculate actual duration in minutes
       const elapsedSec = store.durationSec - store.remainingSec
       const actualDurationMin = Math.max(1, Math.round(elapsedSec / 60))
-      const wasCompleted = store.remainingSec === 0
-      
-      // Mark as abandoned if stopped early
+      // Stop is only reachable while running — always an interrupted session.
       await pomodoroApi.update(sessionId, {
-        abandonedAt: wasCompleted ? undefined : new Date().toISOString(),
-        actualDurationMin: wasCompleted ? undefined : actualDurationMin,
+        abandonedAt: new Date().toISOString(),
+        actualDurationMin,
       })
       qc.invalidateQueries({ queryKey: ['pomodoro'] })
     }
@@ -336,6 +387,14 @@ export default function PomodoroPage() {
   return (
     <div>
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {showDistractionModal && (
+        <DistractionModal
+          isOpen={showDistractionModal}
+          onClose={() => setShowDistractionModal(false)}
+          onSubmit={handleDistraction}
+          timeRemaining={timeRemaining}
+        />
+      )}
 
       {/* Body Doubling */}
       <div className="mb-6">
@@ -453,6 +512,18 @@ export default function PomodoroPage() {
           <div className="mt-4 text-green-400 font-medium animate-pulse">
             {isBreak ? 'Break complete! Ready to focus?' : "Time's up! Great focus session."}
           </div>
+        )}
+
+        {/* Got Distracted button - only show during work sessions */}
+        {!isBreak && store.isRunning && (
+          <button
+            onClick={() => setShowDistractionModal(true)}
+            className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-900/20 border border-amber-700/30 transition-colors"
+            title="Log a distraction (keyboard shortcut: D)"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Got Distracted?
+          </button>
         )}
 
         {/* Break suggestions - show during breaks */}

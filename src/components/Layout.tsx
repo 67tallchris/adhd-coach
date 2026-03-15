@@ -1,20 +1,27 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Brain, CheckSquare, Target, Timer, Sparkles } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Brain, CheckSquare, Target, Timer, Sparkles, GitGraph, Focus, TrendingUp } from 'lucide-react'
 import clsx from 'clsx'
 import NudgePanel from './NudgePanel'
 import QuickCapture from './QuickCapture'
 import { useAppOpen } from '../hooks/useAppOpen'
+import { LevelProgress } from '../features/level/LevelProgress'
+import { usePomodoroTicker } from '../hooks/usePomodoroTicker'
 
 const nav = [
-  { to: '/brain-dump', label: 'Brain Dump', icon: Brain },
-  { to: '/habits', label: 'Habits', icon: CheckSquare },
-  { to: '/pomodoro', label: 'Pomodoro', icon: Timer },
-  { to: '/goals', label: 'Goals', icon: Target },
-  { to: '/nudges', label: 'Nudge History', icon: Sparkles },
+  { to: '/app/brain-dump', label: 'Brain Dump', icon: Brain },
+  { to: '/app/habits', label: 'Habits', icon: CheckSquare },
+  { to: '/app/pomodoro', label: 'Pomodoro', icon: Timer },
+  { to: '/app/goals', label: 'Goals', icon: Target },
+  { to: '/app/ladders', label: 'Ladders', icon: GitGraph },
+  { to: '/app/focus', label: 'Focus', icon: Focus },
+  { to: '/app/progress', label: 'Progress', icon: TrendingUp },
+  { to: '/app/nudges', label: 'Nudge History', icon: Sparkles },
 ]
 
 export default function Layout() {
   useAppOpen()
+  usePomodoroTicker()
+  const navigate = useNavigate()
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -42,6 +49,11 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Level Progress in Sidebar */}
+        <div className="p-3 border-t border-gray-800">
+          <LevelProgress onClick={() => navigate('/app/progress')} compact={false} />
+        </div>
 
         <div className="p-4 border-t border-gray-800">
           <p className="text-xs text-gray-600 text-center">

@@ -105,14 +105,15 @@ export const usePomodoroStore = create<PomodoroState>()(
 
       tick: () => {
         const { remainingSec, settings, isBreak, showNotification, startBreak } = get()
-        if (remainingSec <= 1) {
-          set({ isRunning: false, remainingSec: 0 })
-          // Timer completed
+        if (remainingSec <= 0) return // already signalled completion, wait for handler
+        if (remainingSec === 1) {
+          // Keep isRunning: true so usePomodoroTicker's isDone check fires correctly.
+          // The ticker's completion handler calls stop() once the API call is made.
+          set({ remainingSec: 0 })
           showNotification(
             isBreak ? 'Break Complete!' : 'Pomodoro Complete!',
             isBreak ? 'Time to focus!' : 'Great work! Take a break?'
           )
-          // Auto-start break if enabled and this was a work session
           if (!isBreak && settings.autoStartBreaks) {
             setTimeout(() => {
               const currentSettings = get().settings
