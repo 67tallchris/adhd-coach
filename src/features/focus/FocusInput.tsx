@@ -83,14 +83,14 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
               onClick={() => handleSubmit(focus.level)}
               disabled={isSubmitting}
               className={clsx(
-                'flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1 max-w-[4.5rem]',
+                'flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl transition-all flex-1 overflow-hidden min-w-0',
                 selectedLevel === focus.level
                   ? 'bg-brand-600/30 border-2 border-brand-500 scale-105'
                   : 'bg-gray-800/40 border-2 border-transparent hover:bg-gray-700/50 hover:border-gray-600'
               )}
             >
-              <span className="text-3xl">{focus.emoji}</span>
-              <span className="text-xs font-medium text-gray-300">{focus.label}</span>
+              <span className="text-2xl leading-none">{focus.emoji}</span>
+              <span className="text-xs font-medium text-gray-300 truncate w-full text-center">{focus.label}</span>
             </button>
           ))}
         </div>
