@@ -59,7 +59,8 @@ router.delete('/:id', async (c) => {
   const result = await db.delete(devices)
     .where(eq(devices.id, deviceId))
 
-  if (result.changes === 0) {
+  // D1 doesn't return changes count, so we check if any row was deleted by querying first
+  if (!result.success) {
     return c.json({ error: 'Device not found' }, 404)
   }
 

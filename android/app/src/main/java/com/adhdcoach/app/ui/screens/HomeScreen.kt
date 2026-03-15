@@ -19,7 +19,9 @@ fun HomeScreen(
     onNavigateToTasks: () -> Unit,
     onNavigateToNudges: () -> Unit,
     onNavigateToHabits: () -> Unit,
-    onNavigateToGoals: () -> Unit
+    onNavigateToGoals: () -> Unit,
+    onNavigateToLadders: () -> Unit,
+    onNavigateToStreaks: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -90,6 +92,24 @@ fun HomeScreen(
                     title = "Goals",
                     description = "Track progress",
                     onClick = onNavigateToGoals
+                )
+            }
+
+            item {
+                FeatureCard(
+                    icon = Icons.Default.Stairs,
+                    title = "Ladders",
+                    description = "Reverse task mapping",
+                    onClick = onNavigateToLadders
+                )
+            }
+
+            item {
+                FeatureCard(
+                    icon = Icons.Default.EmojiEvents,
+                    title = "Progress",
+                    description = "Streaks & achievements",
+                    onClick = onNavigateToStreaks
                 )
             }
         }

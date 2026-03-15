@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, sql, and, gte, lt, or } from 'drizzle-orm'
+import { eq, sql, and, gte, lt } from 'drizzle-orm'
 import { getDb } from '../db/index'
 import { bodyDoublingSessions } from '../db/schema'
 
@@ -8,7 +8,6 @@ const router = new Hono<Env>()
 
 // Constants
 const HEARTBEAT_TIMEOUT_MS = 2 * 60 * 1000 // 2 minutes - sessions stale after this
-const SESSION_ROTATION_HOURS = 1 // Rotate session IDs hourly
 
 // Helper: get current hour-based session ID prefix
 function getSessionIdPrefix(): string {
@@ -26,7 +25,7 @@ function generateSessionId(): string {
 }
 
 // Helper: get coarse region from request (simplified)
-function getCoarseRegion(c: Hono.Context): string | undefined {
+function getCoarseRegion(c: any): string | undefined {
   // In production, use CF-IPCountry header from Cloudflare
   const country = c.req.header('CF-IPCountry')
   if (country) return country

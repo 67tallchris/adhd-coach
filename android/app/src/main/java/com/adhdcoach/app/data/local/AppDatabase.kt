@@ -13,9 +13,11 @@ import com.adhdcoach.app.data.local.entity.*
         NudgeEntity::class,
         HabitEntity::class,
         GoalEntity::class,
-        DeviceEntity::class
+        DeviceEntity::class,
+        LadderGoalEntity::class,
+        LadderStepEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -26,4 +28,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
     abstract fun goalDao(): GoalDao
     abstract fun deviceDao(): DeviceDao
+    abstract fun ladderGoalDao(): LadderGoalDao
+    abstract fun ladderStepDao(): LadderStepDao
 }

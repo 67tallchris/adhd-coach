@@ -115,6 +115,109 @@ export const bodyDoublingSessions = sqliteTable('body_doubling_sessions', {
   index('idx_body_task_type').on(t.taskType),
 ])
 
+export const ladderGoals = sqliteTable('ladder_goals', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  title: text('title').notNull(), // The end goal (top of ladder)
+  description: text('description'),
+  taskId: text('task_id').references(() => tasks.id, { onDelete: 'set null' }), // Optional link to existing task
+  goalId: text('goal_id').references(() => goals.id, { onDelete: 'set null' }), // Optional link to existing goal
+  status: text('status', { enum: ['active', 'completed', 'archived'] }).notNull().default('active'),
+  createdAt: text('created_at').notNull().default(now()),
+  updatedAt: text('updated_at').notNull().default(now()),
+  completedAt: text('completed_at'),
+}, (t) => [
+  index('idx_ladder_status').on(t.status),
+  index('idx_ladder_task').on(t.taskId),
+  index('idx_ladder_goal').on(t.goalId),
+])
+
+export const ladderSteps = sqliteTable('ladder_steps', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  ladderId: text('ladder_id').notNull().references(() => ladderGoals.id, { onDelete: 'cascade' }),
+  stepNumber: integer('step_number').notNull(), // 1 = bottom (first action), higher = closer to goal
+  title: text('title').notNull(), // What needs to be done
+  notes: text('notes'), // Additional context
+  isCompleted: integer('is_completed', { mode: 'boolean' }).notNull().default(false),
+  completedAt: text('completed_at'),
+  createdAt: text('created_at').notNull().default(now()),
+}, (t) => [
+  index('idx_step_ladder').on(t.ladderId),
+  index('idx_step_number').on(t.stepNumber),
+  index('idx_step_completed').on(t.isCompleted),
+])
+
+export const distractionLogs = sqliteTable('distraction_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  sessionId: text('session_id').references(() => pomodoroSessions.id, { onDelete: 'set null' }),
+  timestamp: text('timestamp').notNull().default(now()),
+  distractionType: text('distraction_type', {
+    enum: ['internal', 'external', 'urgent', 'overwhelm', 'boredom', 'rabbit-hole']
+  }).notNull(),
+  notes: text('notes'),
+  action: text('action', {
+    enum: ['resumed', 'restarted', 'abandoned', 'took_break']
+  }).notNull(),
+  timeElapsed: integer('time_elapsed').notNull().default(0), // seconds into session
+}, (t) => [
+  index('idx_distraction_session').on(t.sessionId),
+  index('idx_distraction_type').on(t.distractionType),
+  index('idx_distraction_timestamp').on(t.timestamp),
+])
+
+export const focusLogs = sqliteTable('focus_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  timestamp: text('timestamp').notNull().default(now()),
+  focusLevel: integer('focus_level').notNull(), // 1-5 scale
+  notes: text('notes'),
+  context: text('context'), // JSON: { energy: 'low'|'medium'|'high', sleep: 'poor'|'normal'|'good', mood: string[] }
+}, (t) => [
+  index('idx_focus_timestamp').on(t.timestamp),
+  index('idx_focus_level').on(t.focusLevel),
+])
+
+export const focusCorrelations = sqliteTable('focus_correlations', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  date: text('date').notNull(), // YYYY-MM-DD
+  avgFocusLevel: integer('avg_focus_level').notNull(), // 1-5 (stored as integer * 10 for precision)
+  habitsCompleted: text('habits_completed').notNull().default('[]'), // JSON array of habit IDs
+  pomodoroSessions: integer('pomodoro_sessions').notNull().default(0),
+  tasksCompleted: integer('tasks_completed').notNull().default(0),
+  correlationScores: text('correlation_scores').notNull().default('{}'), // JSON: { habitId: score, '_pomodoro': score, '_tasks': score }
+  computedAt: text('computed_at').notNull().default(now()),
+}, (t) => [
+  index('idx_focus_corr_date').on(t.date),
+])
+
+export const userLevels = sqliteTable('user_levels', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  currentXp: integer('current_xp').notNull().default(0),
+  level: integer('level').notNull().default(1),
+  tier: text('tier', {
+    enum: ['wood', 'iron', 'steel', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster']
+  }).notNull().default('wood'),
+  tierProgress: integer('tier_progress').notNull().default(0), // 0-100
+  focusMode: text('focus_mode', { enum: ['pomodoro', 'focus'] }),
+  nextUnlockLevel: integer('next_unlock_level').notNull().default(2),
+  hasSeenOnboarding: integer('has_seen_onboarding', { mode: 'boolean' }).notNull().default(false),
+  lastLevelUpAt: text('last_level_up_at'),
+  createdAt: text('created_at').notNull().default(now()),
+  updatedAt: text('updated_at').notNull().default(now()),
+})
+
+export const xpLogs = sqliteTable('xp_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  xpAmount: integer('xp_amount').notNull(),
+  source: text('source', {
+    enum: ['pomodoro_session', 'focus_checkin', 'habit_completion', 'task_completion', 'daily_streak', 'first_win', 'level_up', 'onboarding']
+  }).notNull(),
+  description: text('description').notNull(),
+  metadata: text('metadata'), // JSON: { sessionId, duration, etc. }
+  createdAt: text('created_at').notNull().default(now()),
+}, (t) => [
+  index('idx_xp_source').on(t.source),
+  index('idx_xp_created_at').on(t.createdAt),
+])
+
 // TypeScript types inferred from schema
 export type Goal = typeof goals.$inferSelect
 export type NewGoal = typeof goals.$inferInsert
@@ -131,3 +234,17 @@ export type Device = typeof devices.$inferSelect
 export type NewDevice = typeof devices.$inferInsert
 export type BodyDoublingSession = typeof bodyDoublingSessions.$inferSelect
 export type NewBodyDoublingSession = typeof bodyDoublingSessions.$inferInsert
+export type LadderGoal = typeof ladderGoals.$inferSelect
+export type NewLadderGoal = typeof ladderGoals.$inferInsert
+export type LadderStep = typeof ladderSteps.$inferSelect
+export type NewLadderStep = typeof ladderSteps.$inferInsert
+export type DistractionLog = typeof distractionLogs.$inferSelect
+export type NewDistractionLog = typeof distractionLogs.$inferInsert
+export type FocusLog = typeof focusLogs.$inferSelect
+export type NewFocusLog = typeof focusLogs.$inferInsert
+export type FocusCorrelation = typeof focusCorrelations.$inferSelect
+export type NewFocusCorrelation = typeof focusCorrelations.$inferInsert
+export type UserLevel = typeof userLevels.$inferSelect
+export type NewUserLevel = typeof userLevels.$inferInsert
+export type XpLog = typeof xpLogs.$inferSelect
+export type NewXpLog = typeof xpLogs.$inferInsert

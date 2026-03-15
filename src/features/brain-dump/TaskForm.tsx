@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useCreateTask } from './useTasks'
 import { useGoals } from '../goals/useGoals'
+import { useLadderStore } from '../../stores/ladderStore'
 import type { Priority } from '../../types'
 import { parseNaturalDate, formatDueDate } from '../../utils/parseDueDate'
-import { Calendar, X } from 'lucide-react'
+import { Calendar, X, GitGraph } from 'lucide-react'
 import clsx from 'clsx'
 
 interface Props {
@@ -29,6 +30,7 @@ export default function TaskForm({ onClose }: Props) {
 
   const createTask = useCreateTask()
   const { data: goals = [] } = useGoals()
+  const { openBuilder } = useLadderStore()
 
   // Parse due date from input
   useEffect(() => {
@@ -163,13 +165,26 @@ export default function TaskForm({ onClose }: Props) {
       )}
 
       <div className="mt-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setShowDetails(!showDetails)}
-          className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          {showDetails ? '− Less options' : '+ More options'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            {showDetails ? '− Less options' : '+ More options'}
+          </button>
+          {title.trim() && (
+            <button
+              type="button"
+              onClick={() => openBuilder({})}
+              className="text-xs text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
+              title="Break this down into smaller steps"
+            >
+              <GitGraph className="w-3.5 h-3.5" />
+              Build ladder
+            </button>
+          )}
+        </div>
         <div className="flex gap-2">
           {onClose && (
             <button type="button" onClick={onClose} className="text-xs text-gray-500 hover:text-gray-300 px-3 py-1.5">

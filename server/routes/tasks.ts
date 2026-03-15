@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { eq, and, sql } from 'drizzle-orm'
 import { getDb } from '../db/index'
 import { tasks, devices } from '../db/schema'
-import { sendTaskReminderNotification, sendTaskDueSoonNotification } from '../services/fcm'
+import { sendTaskReminderNotification } from '../services/fcm'
 
 type Env = { Bindings: { DB: D1Database } }
 

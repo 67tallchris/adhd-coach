@@ -1,5 +1,3 @@
-import { FCMMessaging } from 'firebase-cloud-messaging'
-
 // FCM Server configuration
 // Add FCM_SERVER_KEY to your Cloudflare Workers secrets/environment variables
 const FCM_SERVER_KEY = 'YOUR_FCM_SERVER_KEY'
@@ -60,7 +58,7 @@ export async function sendPushNotification(
       return false
     }
 
-    const result = await response.json()
+    const result = await response.json() as { success?: number }
     console.log('FCM send result:', result)
     return result.success === 1
   } catch (error) {

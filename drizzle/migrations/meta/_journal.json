@@ -8,6 +8,55 @@
       "when": 1772140062683,
       "tag": "0000_lush_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773328570745,
+      "tag": "0001_polite_famine",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773328570746,
+      "tag": "0002_bright_streak",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1773328570747,
+      "tag": "0003_calm_body_doubling",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1773328570748,
+      "tag": "0004_abandoned_pomodoro",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1773328570749,
+      "tag": "0005_due_dates",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1773328570750,
+      "tag": "0006_ladder_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1773328570751,
+      "tag": "0007_distraction_logs",
+      "breakpoints": true
     }
   ]
 }

@@ -5,24 +5,34 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.adhdcoach.app.ui.viewmodel.BodyDoublingViewModel
+import com.adhdcoach.app.ui.viewmodel.BreakActivitiesViewModel
+import com.adhdcoach.app.ui.viewmodel.DistractionViewModel
 import com.adhdcoach.app.ui.viewmodel.MainViewModel
 import java.util.concurrent.TimeUnit
 
 @Composable
 fun PomodoroScreen(
     onNavigateBack: () -> Unit,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    bodyDoublingViewModel: BodyDoublingViewModel,
+    breakActivitiesViewModel: BreakActivitiesViewModel,
+    distractionViewModel: DistractionViewModel
 ) {
     val timerState by viewModel.timerState.collectAsState()
     var selectedTaskId by remember { mutableStateOf<String?>(null) }
+    val isBreak = timerState.durationSec == 5 * 60 || timerState.durationSec == 10 * 60 // Simplified break detection
+    val isWorkSession = !isBreak && timerState.isRunning
 
     Column(
         modifier = Modifier
@@ -50,7 +60,15 @@ fun PomodoroScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Body Doubling Indicator
+        BodyDoublingIndicator(
+            viewModel = bodyDoublingViewModel,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Timer display
         Box(
@@ -163,5 +181,70 @@ fun PomodoroScreen(
                 }
             }
         }
+
+        // Break Activity Suggestions - Only show during breaks
+        if (isBreak && !timerState.isRunning) {
+            Spacer(modifier = Modifier.height(24.dp))
+            BreakActivitySuggestions(
+                viewModel = breakActivitiesViewModel,
+                breakDurationMin = timerState.durationSec / 60,
+                onActivityComplete = {
+                    // Could trigger notification or analytics here
+                }
+            )
+        }
+
+        // Got Distracted button - Only show during work sessions
+        if (isWorkSession) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { distractionViewModel.openModal() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFf59e0b)
+                ),
+                border = androidx.compose.foundation.border(
+                    width = 1.dp,
+                    color = Color(0xFFf59e0b).copy(alpha = 0.3f),
+                    shape = MaterialTheme.shapes.medium
+                )
+            ) {
+                Icon(
+                    Icons.Default.ChatBubble,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp).size(18.dp)
+                )
+                Text("Got Distracted?")
+            }
+        }
+
+        // Distraction Modal
+        DistractionModal(
+            viewModel = distractionViewModel,
+            timeRemaining = if (timerState.isRunning && !isBreak) {
+                String.format("%02d:%02d", timerState.remainingSec / 60, timerState.remainingSec % 60)
+            } else null,
+            onActionSelected = { action ->
+                // Handle the selected action
+                when (action) {
+                    "resumed" -> {
+                        // Resume timer
+                    }
+                    "restarted" -> {
+                        // Restart timer
+                        viewModel.stopPomodoro()
+                        viewModel.startPomodoro(selectedTaskId)
+                    }
+                    "took_break" -> {
+                        // Switch to break mode
+                        viewModel.stopPomodoro()
+                    }
+                    "abandoned" -> {
+                        // End session
+                        viewModel.stopPomodoro()
+                    }
+                }
+            }
+        )
     }
 }

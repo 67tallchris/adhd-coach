@@ -14,8 +14,14 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.adhdcoach.app.data.remote.ApiClient
+import com.adhdcoach.app.data.repository.BodyDoublingRepository
 import com.adhdcoach.app.ui.screens.*
 import com.adhdcoach.app.ui.theme.ADHDCoachTheme
+import com.adhdcoach.app.ui.viewmodel.BodyDoublingViewModel
+import com.adhdcoach.app.ui.viewmodel.BreakActivitiesViewModel
+import com.adhdcoach.app.ui.viewmodel.DistractionViewModel
+import com.adhdcoach.app.ui.viewmodel.StreaksViewModel
 import com.adhdcoach.app.ui.viewmodel.MainViewModel
 import com.adhdcoach.app.ui.viewmodel.MainViewModelFactory
 
@@ -23,6 +29,26 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by lazy {
         MainViewModel(this.application)
+    }
+
+    private val bodyDoublingRepository: BodyDoublingRepository by lazy {
+        BodyDoublingRepository(ApiClient.apiService)
+    }
+
+    private val bodyDoublingViewModel: BodyDoublingViewModel by lazy {
+        BodyDoublingViewModel(this.application, bodyDoublingRepository)
+    }
+
+    private val breakActivitiesViewModel: BreakActivitiesViewModel by lazy {
+        BreakActivitiesViewModel(this.application)
+    }
+
+    private val distractionViewModel: DistractionViewModel by lazy {
+        DistractionViewModel(this.application, ApiClient.apiService)
+    }
+
+    private val streaksViewModel: StreaksViewModel by lazy {
+        StreaksViewModel(this.application, ApiClient.apiService)
     }
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -56,7 +82,11 @@ class MainActivity : ComponentActivity() {
                     ADHDCoachApp(
                         navController = navController,
                         startDestination = startDestination,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        bodyDoublingViewModel = bodyDoublingViewModel,
+                        breakActivitiesViewModel = breakActivitiesViewModel,
+                        distractionViewModel = distractionViewModel,
+                        streaksViewModel = streaksViewModel
                     )
                 }
             }
@@ -68,7 +98,11 @@ class MainActivity : ComponentActivity() {
 fun ADHDCoachApp(
     navController: androidx.navigation.NavHostController,
     startDestination: String?,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    bodyDoublingViewModel: BodyDoublingViewModel,
+    breakActivitiesViewModel: BreakActivitiesViewModel,
+    distractionViewModel: DistractionViewModel,
+    streaksViewModel: StreaksViewModel
 ) {
     val initialRoute = when (startDestination) {
         "pomodoro" -> "pomodoro"
@@ -76,6 +110,7 @@ fun ADHDCoachApp(
         "nudges" -> "nudges"
         "habits" -> "habits"
         "goals" -> "goals"
+        "ladders" -> "ladders"
         else -> "home"
     }
 
@@ -89,14 +124,18 @@ fun ADHDCoachApp(
                 onNavigateToTasks = { navController.navigate("tasks") },
                 onNavigateToNudges = { navController.navigate("nudges") },
                 onNavigateToHabits = { navController.navigate("habits") },
-                onNavigateToGoals = { navController.navigate("goals") }
+                onNavigateToGoals = { navController.navigate("goals") },
+                onNavigateToLadders = { navController.navigate("ladders") },
+                onNavigateToStreaks = { navController.navigate("streaks") }
             )
         }
 
         composable("pomodoro") {
             PomodoroScreen(
                 onNavigateBack = { navController.popBackStack() },
-                viewModel = viewModel
+                viewModel = viewModel,
+                bodyDoublingViewModel = bodyDoublingViewModel,
+                breakActivitiesViewModel = breakActivitiesViewModel
             )
         }
 
@@ -126,6 +165,14 @@ fun ADHDCoachApp(
                 onNavigateBack = { navController.popBackStack() },
                 viewModel = viewModel
             )
+        }
+
+        composable("ladders") {
+            LaddersScreen()
+        }
+
+        composable("streaks") {
+            StreaksScreen(viewModel = streaksViewModel)
         }
     }
 }
