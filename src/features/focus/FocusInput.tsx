@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, ChevronDown, ChevronUp } from 'lucide-react'
 import clsx from 'clsx'
+import { useQueryClient } from '@tanstack/react-query'
 import { useFocusStore } from '../../stores/focusStore'
 import { useLevelStore } from '../../stores/levelStore'
 import { FOCUS_LEVELS } from '../../types'
@@ -13,6 +14,7 @@ interface FocusInputProps {
 export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
   const { logFocus, lastFocusLevel, setLastFocusLevel } = useFocusStore()
   const { awardXp } = useLevelStore()
+  const qc = useQueryClient()
   const [selectedLevel, setSelectedLevel] = useState<number | null>(lastFocusLevel)
   const [notes, setNotes] = useState('')
   const [showDetails, setShowDetails] = useState(false)
@@ -42,6 +44,8 @@ export function FocusInput({ onClose, showHeader = true }: FocusInputProps) {
       setSelectedLevel(level)
       setNotes('')
       setShowDetails(false)
+      qc.invalidateQueries({ queryKey: ['focus-dashboard'] })
+      qc.invalidateQueries({ queryKey: ['focus-daily'] })
       onClose?.()
     } finally {
       setIsSubmitting(false)
