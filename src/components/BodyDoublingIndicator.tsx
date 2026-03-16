@@ -1,8 +1,9 @@
-import { Users, LogOut, LogIn, Coffee, Briefcase } from 'lucide-react'
+import { Users, LogOut, LogIn, Coffee, Briefcase, Video } from 'lucide-react'
 import clsx from 'clsx'
 import { useBodyDoublingStore } from '../stores/bodyDoublingStore'
 import { useQuery } from '@tanstack/react-query'
 import { bodyDoublingApi } from '../api/bodyDoubling'
+import { useNavigate } from 'react-router-dom'
 
 interface BodyDoublingIndicatorProps {
   currentTaskType?: 'work' | 'break'
@@ -12,6 +13,7 @@ interface BodyDoublingIndicatorProps {
 export function BodyDoublingIndicator({
   onTaskTypeChange,
 }: BodyDoublingIndicatorProps) {
+  const navigate = useNavigate()
   const {
     isEnabled,
     sessionId,
@@ -49,7 +51,7 @@ export function BodyDoublingIndicator({
   if (!isEnabled) {
     return (
       <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-gray-700/50">
               <Users className="w-5 h-5 text-gray-400" />
@@ -69,6 +71,20 @@ export function BodyDoublingIndicator({
             <LogIn className="w-4 h-4" />
             {isCheckingIn ? 'Joining...' : 'Join'}
           </button>
+        </div>
+        
+        {/* Video Body Doubling Link */}
+        <div className="mt-3 pt-3 border-t border-gray-700/50">
+          <button
+            onClick={() => navigate('/app/video-body-doubling')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-700/30 text-purple-300 hover:text-purple-200 text-sm font-medium transition-all"
+          >
+            <Video className="w-4 h-4" />
+            Try Video Body Doubling
+          </button>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Focus together via video call
+          </p>
         </div>
       </div>
     )
@@ -163,6 +179,20 @@ export function BodyDoublingIndicator({
       <p className="text-xs text-gray-600 mt-3 text-center">
         🔒 Your identity is anonymous — we don't track who you are
       </p>
+
+      {/* Video Body Doubling Link */}
+      <div className="mt-4 pt-3 border-t border-gray-700/50">
+        <button
+          onClick={() => navigate('/app/video-body-doubling')}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 border border-purple-700/30 text-purple-300 hover:text-purple-200 text-sm font-medium transition-all"
+        >
+          <Video className="w-4 h-4" />
+          Try Video Body Doubling
+        </button>
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          Focus together via video call
+        </p>
+      </div>
     </div>
   )
 }
