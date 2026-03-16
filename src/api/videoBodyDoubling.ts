@@ -18,6 +18,26 @@ export interface ActiveSessionSummary {
   description?: string
 }
 
+export interface VideoAnnouncement {
+  id: string
+  sessionId: string
+  status: 'waiting' | 'starting' | 'active' | 'cancelled' | 'expired'
+  interestedCount: number
+  joinedCount: number
+  waitUntil: string
+  lateJoinUntil: string
+  sessionDurationMin: number
+  createdAt: string
+}
+
+export interface CreateAnnouncementResponse {
+  announcement: VideoAnnouncement & {
+    session: VideoSession
+    jitsiRoomId: string
+  }
+  potentialParticipants: number
+}
+
 export const videoBodyDoublingApi = {
   create: (data: CreateVideoSessionRequest) =>
     apiFetch<CreateVideoSessionResponse>('/video-body-doubling/sessions', {
@@ -50,4 +70,53 @@ export const videoBodyDoublingApi = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+
+  // Announcement endpoints
+  createAnnouncement: (data?: {
+    roomName?: string
+    description?: string
+    sessionDurationMin?: number
+    tags?: string[]
+  }) =>
+    apiFetch<CreateAnnouncementResponse>('/video-body-doubling/announcements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  expressInterest: (announcementId: string) =>
+    apiFetch<{ announcement: VideoAnnouncement; interestedCount: number }>(
+      `/video-body-doubling/announcements/${announcementId}/interest`,
+      { method: 'POST' }
+    ),
+
+  startAnnouncement: (announcementId: string) =>
+    apiFetch<{ announcement: VideoAnnouncement; session: VideoSession }>(
+      `/video-body-doubling/announcements/${announcementId}/start`,
+      { method: 'POST' }
+    ),
+
+  joinAnnouncement: (announcementId: string, data?: { displayName?: string }) =>
+    apiFetch<JoinSessionResponse>(
+      `/video-body-doubling/announcements/${announcementId}/join`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    ),
+
+  getAnnouncement: (announcementId: string) =>
+    apiFetch<{ announcement: VideoAnnouncement & { session: VideoSession; participants: any[] } }>(
+      `/video-body-doubling/announcements/${announcementId}`
+    ),
+
+  getActiveAnnouncements: () =>
+    apiFetch<{ announcements: VideoAnnouncement[] }>(
+      '/video-body-doubling/announcements/active'
+    ),
+
+  cancelAnnouncement: (announcementId: string) =>
+    apiFetch<{ ok: boolean }>(
+      `/video-body-doubling/announcements/${announcementId}`,
+      { method: 'DELETE' }
+    ),
 }

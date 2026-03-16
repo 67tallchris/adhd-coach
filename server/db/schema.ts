@@ -147,6 +147,26 @@ export const videoBodyDoublingParticipants = sqliteTable('video_body_doubling_pa
   index('idx_video_participant_active').on(t.isActive),
 ])
 
+export const videoBodyDoublingAnnouncements = sqliteTable('video_body_doubling_announcements', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  sessionId: text('session_id').notNull().references(() => videoBodyDoublingSessions.id, { onDelete: 'cascade' }),
+  createdBy: text('created_by'), // Anonymous user ID
+  createdAt: text('created_at').notNull().default(now()),
+  status: text('status', {
+    enum: ['waiting', 'starting', 'active', 'cancelled', 'expired']
+  }).notNull().default('waiting'),
+  waitUntil: text('wait_until').notNull(), // Wait until this time (2 min from creation)
+  lateJoinUntil: text('late_join_until'), // Allow late joiners until this time (5 min from start)
+  sessionDurationMin: integer('session_duration_min').notNull().default(25),
+  interestedCount: integer('interested_count').notNull().default(0),
+  joinedCount: integer('joined_count').notNull().default(0),
+}, (t) => [
+  index('idx_announcement_session').on(t.sessionId),
+  index('idx_announcement_status').on(t.status),
+  index('idx_announcement_wait_until').on(t.waitUntil),
+  index('idx_announcement_created_at').on(t.createdAt),
+])
+
 export const ladderGoals = sqliteTable('ladder_goals', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
   title: text('title').notNull(), // The end goal (top of ladder)
@@ -278,6 +298,8 @@ export type VideoBodyDoublingSession = typeof videoBodyDoublingSessions.$inferSe
 export type NewVideoBodyDoublingSession = typeof videoBodyDoublingSessions.$inferInsert
 export type VideoBodyDoublingParticipant = typeof videoBodyDoublingParticipants.$inferSelect
 export type NewVideoBodyDoublingParticipant = typeof videoBodyDoublingParticipants.$inferInsert
+export type VideoBodyDoublingAnnouncement = typeof videoBodyDoublingAnnouncements.$inferSelect
+export type NewVideoBodyDoublingAnnouncement = typeof videoBodyDoublingAnnouncements.$inferInsert
 export type LadderGoal = typeof ladderGoals.$inferSelect
 export type NewLadderGoal = typeof ladderGoals.$inferInsert
 export type LadderStep = typeof ladderSteps.$inferSelect
