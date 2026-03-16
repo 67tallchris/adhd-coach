@@ -21,6 +21,7 @@ export function useGenerateNudge(provider: 'claude' | 'qwen' = 'qwen') {
   return useMutation({
     mutationFn: () => nudgesApi.generate('manual_refresh', provider),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['nudges'] }),
+    retry: false,
   })
 }
 

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Brain, CheckSquare, Target, Timer, Sparkles, GitGraph, Focus, TrendingUp } from 'lucide-react'
+import { Brain, CheckSquare, Target, Timer, Sparkles, GitGraph, Focus, TrendingUp, Settings, BarChart3, Video } from 'lucide-react'
 import clsx from 'clsx'
 import NudgePanel from './NudgePanel'
 import QuickCapture from './QuickCapture'
@@ -14,8 +14,14 @@ const nav = [
   { to: '/app/goals', label: 'Goals', icon: Target },
   { to: '/app/ladders', label: 'Ladders', icon: GitGraph },
   { to: '/app/focus', label: 'Focus', icon: Focus },
+  { to: '/app/video-body-doubling', label: 'Video Doubling', icon: Video },
+  { to: '/app/stats', label: 'Stats', icon: BarChart3 },
   { to: '/app/progress', label: 'Progress', icon: TrendingUp },
   { to: '/app/nudges', label: 'Nudge History', icon: Sparkles },
+]
+
+const bottomNav = [
+  { to: '/app/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Layout() {
@@ -53,6 +59,25 @@ export default function Layout() {
         {/* Level Progress in Sidebar */}
         <div className="p-3 border-t border-gray-800">
           <LevelProgress onClick={() => navigate('/app/progress')} compact={false} />
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="p-3 border-t border-gray-800">
+          {bottomNav.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => clsx(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-brand-900/60 text-brand-300 border border-brand-800/50'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+              )}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+            </NavLink>
+          ))}
         </div>
 
         <div className="p-4 border-t border-gray-800">

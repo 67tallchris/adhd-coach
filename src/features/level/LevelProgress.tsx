@@ -24,8 +24,7 @@ export function LevelProgress({ onClick, compact = false }: LevelProgressProps) 
   }
 
   const tierInfo = TIER_INFO[level.tier as keyof typeof TIER_INFO]
-  const progress = level.tierProgress
-  const subLevel = level.level % 3 || 3 // 1, 2, or 3
+  const subLevel = level.level % 3 || 3
 
   return (
     <button
@@ -36,26 +35,15 @@ export function LevelProgress({ onClick, compact = false }: LevelProgressProps) 
       )}
     >
       <TierBadge tier={level.tier as keyof typeof TIER_INFO} size={compact ? 'sm' : 'md'} />
-      
+
       {!compact && (
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-white">
-              {tierInfo.name} {subLevel}
-            </span>
-            <span className="text-xs text-gray-400">
-              Lvl {level.level}
-            </span>
-          </div>
-          <div className="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ 
-                width: `${progress}%`,
-                background: tierInfo.gradient,
-              }}
-            />
-          </div>
+          <span className="text-xs font-medium text-white">
+            {tierInfo.name} {subLevel}
+          </span>
+          <span className="text-xs text-gray-400">
+            {level.xpToNextLevel} XP to next
+          </span>
         </div>
       )}
 

@@ -115,6 +115,38 @@ export const bodyDoublingSessions = sqliteTable('body_doubling_sessions', {
   index('idx_body_task_type').on(t.taskType),
 ])
 
+export const videoBodyDoublingSessions = sqliteTable('video_body_doubling_sessions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  roomName: text('room_name').notNull(), // Human-readable room name
+  jitsiRoomId: text('jitsi_room_id').notNull(), // Unique Jitsi room identifier
+  createdBy: text('created_by'), // Anonymous user ID (optional)
+  createdAt: text('created_at').notNull().default(now()),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  participantCount: integer('participant_count').notNull().default(0),
+  maxParticipants: integer('max_participants'), // Optional limit
+  description: text('description'),
+  tags: text('tags').notNull().default('[]'), // JSON array of tags
+  lastActivityAt: text('last_activity_at').notNull().default(now()),
+}, (t) => [
+  index('idx_video_room_name').on(t.roomName),
+  index('idx_video_jitsi_room').on(t.jitsiRoomId),
+  index('idx_video_active').on(t.isActive),
+  index('idx_video_created_at').on(t.createdAt),
+])
+
+export const videoBodyDoublingParticipants = sqliteTable('video_body_doubling_participants', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  sessionId: text('session_id').notNull().references(() => videoBodyDoublingSessions.id, { onDelete: 'cascade' }),
+  jitsiParticipantId: text('jitsi_participant_id'), // ID from Jitsi
+  displayName: text('display_name'),
+  joinedAt: text('joined_at').notNull().default(now()),
+  leftAt: text('left_at'),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+}, (t) => [
+  index('idx_video_participant_session').on(t.sessionId),
+  index('idx_video_participant_active').on(t.isActive),
+])
+
 export const ladderGoals = sqliteTable('ladder_goals', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
   title: text('title').notNull(), // The end goal (top of ladder)
@@ -204,6 +236,14 @@ export const userLevels = sqliteTable('user_levels', {
   updatedAt: text('updated_at').notNull().default(now()),
 })
 
+export const userProfiles = sqliteTable('user_profiles', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
+  displayName: text('display_name'),
+  timezone: text('timezone').notNull().default('UTC'),
+  createdAt: text('created_at').notNull().default(now()),
+  updatedAt: text('updated_at').notNull().default(now()),
+})
+
 export const xpLogs = sqliteTable('xp_logs', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID().slice(0, 8)),
   xpAmount: integer('xp_amount').notNull(),
@@ -234,6 +274,10 @@ export type Device = typeof devices.$inferSelect
 export type NewDevice = typeof devices.$inferInsert
 export type BodyDoublingSession = typeof bodyDoublingSessions.$inferSelect
 export type NewBodyDoublingSession = typeof bodyDoublingSessions.$inferInsert
+export type VideoBodyDoublingSession = typeof videoBodyDoublingSessions.$inferSelect
+export type NewVideoBodyDoublingSession = typeof videoBodyDoublingSessions.$inferInsert
+export type VideoBodyDoublingParticipant = typeof videoBodyDoublingParticipants.$inferSelect
+export type NewVideoBodyDoublingParticipant = typeof videoBodyDoublingParticipants.$inferInsert
 export type LadderGoal = typeof ladderGoals.$inferSelect
 export type NewLadderGoal = typeof ladderGoals.$inferInsert
 export type LadderStep = typeof ladderSteps.$inferSelect
@@ -246,5 +290,7 @@ export type FocusCorrelation = typeof focusCorrelations.$inferSelect
 export type NewFocusCorrelation = typeof focusCorrelations.$inferInsert
 export type UserLevel = typeof userLevels.$inferSelect
 export type NewUserLevel = typeof userLevels.$inferInsert
+export type UserProfile = typeof userProfiles.$inferSelect
+export type NewUserProfile = typeof userProfiles.$inferInsert
 export type XpLog = typeof xpLogs.$inferSelect
 export type NewXpLog = typeof xpLogs.$inferInsert

@@ -1,36 +1,102 @@
 import { Hono } from 'hono'
 import { eq, sql, and, gte } from 'drizzle-orm'
 import { getDb } from '../db/index'
-import { pomodoroSessions, habitCompletions, tasks, streakConfig } from '../db/schema'
+import { pomodoroSessions, habitCompletions, tasks, streakConfig, userProfiles } from '../db/schema'
 
 type Env = { Bindings: { DB: D1Database } }
 const router = new Hono<Env>()
 
-// Helper: get start of current week (Monday)
-function getWeekStart() {
-  const now = new Date()
-  const day = now.getDay()
-  const diff = (day === 0 ? -6 : 1) - day // Adjust to Monday
-  const weekStart = new Date(now)
-  weekStart.setDate(now.getDate() + diff)
-  weekStart.setHours(0, 0, 0, 0)
-  return weekStart.toISOString().slice(0, 10)
+// Helper: get timezone-aware date functions
+function getTimezoneHelpers(timezone: string) {
+  // SQLite doesn't have built-in timezone support, so we use datetime with offset
+  // For common timezones, we calculate the offset
+  const timezoneOffsets: Record<string, number> = {
+    'UTC': 0,
+    'America/New_York': -5,
+    'America/Chicago': -6,
+    'America/Denver': -7,
+    'America/Los_Angeles': -8,
+    'America/Anchorage': -9,
+    'Pacific/Honolulu': -10,
+    'Europe/London': 0,
+    'Europe/Paris': 1,
+    'Europe/Berlin': 1,
+    'Europe/Moscow': 3,
+    'Asia/Dubai': 4,
+    'Asia/Kolkata': 5.5,
+    'Asia/Bangkok': 7,
+    'Asia/Singapore': 8,
+    'Asia/Hong_Kong': 8,
+    'Asia/Tokyo': 9,
+    'Asia/Seoul': 9,
+    'Australia/Sydney': 11,
+    'Australia/Melbourne': 11,
+    'Pacific/Auckland': 13,
+    'America/Sao_Paulo': -3,
+    'America/Mexico_City': -6,
+    'Africa/Cairo': 2,
+    'Africa/Johannesburg': 2,
+  }
+
+  const offset = timezoneOffsets[timezone] ?? 0
+  
+  // Helper to get date in user's timezone
+  function getLocalDate(dateStr?: string) {
+    const date = dateStr ? new Date(dateStr) : new Date()
+    const utc = date.getTime() + (date.getTimezoneOffset() * 60000)
+    const localDate = new Date(utc + (3600000 * offset))
+    return localDate
+  }
+
+  // Get start of current week (Monday) in user's timezone
+  function getWeekStart() {
+    const now = getLocalDate()
+    const day = now.getDay()
+    const diff = (day === 0 ? -6 : 1) - day
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() + diff)
+    weekStart.setHours(0, 0, 0, 0)
+    return weekStart.toISOString().slice(0, 10)
+  }
+
+  // Get start of last week
+  function getLastWeekStart() {
+    const now = getLocalDate()
+    const day = now.getDay()
+    const diff = (day === 0 ? -6 : 1) - day - 7
+    const lastWeekStart = new Date(now)
+    lastWeekStart.setDate(now.getDate() + diff)
+    lastWeekStart.setHours(0, 0, 0, 0)
+    return lastWeekStart.toISOString().slice(0, 10)
+  }
+
+  // Get today's date in user's timezone
+  function getToday() {
+    return getLocalDate().toISOString().slice(0, 10)
+  }
+
+  // Get yesterday's date in user's timezone
+  function getYesterday() {
+    const yesterday = getLocalDate()
+    yesterday.setDate(yesterday.getDate() - 1)
+    return yesterday.toISOString().slice(0, 10)
+  }
+
+  return { getWeekStart, getLastWeekStart, getToday, getYesterday, offset }
 }
 
-// Helper: get start of last week
-function getLastWeekStart() {
-  const now = new Date()
-  const day = now.getDay()
-  const diff = (day === 0 ? -6 : 1) - day - 7
-  const lastWeekStart = new Date(now)
-  lastWeekStart.setDate(now.getDate() + diff)
-  lastWeekStart.setHours(0, 0, 0, 0)
-  return lastWeekStart.toISOString().slice(0, 10)
+// Helper: get user's timezone
+async function getUserTimezone(db: any): Promise<string> {
+  const profile = await db.select().from(userProfiles).where(eq(userProfiles.id, 'default-user')).get()
+  return profile?.timezone || 'UTC'
 }
 
 // Get streak stats for pomodoro
 router.get('/pomodoro', async (c) => {
   const db = getDb(c.env.DB)
+  const timezone = await getUserTimezone(db)
+  const { getWeekStart, getLastWeekStart } = getTimezoneHelpers(timezone)
+  
   const weekStart = getWeekStart()
   const lastWeekStart = getLastWeekStart()
 
@@ -61,7 +127,7 @@ router.get('/pomodoro', async (c) => {
     .where(sql`${pomodoroSessions.completedAt} IS NOT NULL`)
 
   // Best week (personal best)
-  const [bestWeekResult] = await db.select({ 
+  const [bestWeekResult] = await db.select({
     count: sql<number>`count(*)`,
     week: sql<string>`strftime('%Y-%W', startedAt)`
   })
@@ -100,9 +166,12 @@ router.get('/pomodoro', async (c) => {
 // Get streak stats for habits
 router.get('/habits', async (c) => {
   const db = getDb(c.env.DB)
+  const timezone = await getUserTimezone(db)
+  const { getWeekStart, getLastWeekStart, getToday } = getTimezoneHelpers(timezone)
+  
   const weekStart = getWeekStart()
   const lastWeekStart = getLastWeekStart()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getToday()
 
   // Get config
   const [config] = await db.select().from(streakConfig).where(eq(streakConfig.type, 'habits'))
@@ -112,7 +181,7 @@ router.get('/habits', async (c) => {
   const currentWeekCompletions = await db.select({ date: habitCompletions.date })
     .from(habitCompletions)
     .where(gte(habitCompletions.date, weekStart))
-  
+
   const uniqueDates = new Set(currentWeekCompletions.map(c => c.date))
   const currentCount = uniqueDates.size
 
@@ -123,7 +192,7 @@ router.get('/habits', async (c) => {
       gte(habitCompletions.date, lastWeekStart),
       sql`${habitCompletions.date} < ${weekStart}`
     ))
-  
+
   const lastWeekUniqueDates = new Set(lastWeekCompletions.map(c => c.date))
   const lastWeekCount = lastWeekUniqueDates.size
 
@@ -181,6 +250,9 @@ router.get('/habits', async (c) => {
 // Get streak stats for tasks
 router.get('/tasks', async (c) => {
   const db = getDb(c.env.DB)
+  const timezone = await getUserTimezone(db)
+  const { getWeekStart, getLastWeekStart } = getTimezoneHelpers(timezone)
+  
   const weekStart = getWeekStart()
   const lastWeekStart = getLastWeekStart()
 

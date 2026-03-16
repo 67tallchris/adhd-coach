@@ -2,6 +2,8 @@ export type TierType = 'wood' | 'iron' | 'steel' | 'bronze' | 'silver' | 'gold' 
 export type FocusModeType = 'pomodoro' | 'focus' | null
 export type XpSource = 'pomodoro_session' | 'focus_checkin' | 'habit_completion' | 'task_completion' | 'daily_streak' | 'first_win' | 'level_up' | 'onboarding'
 
+export const TIER_ORDER: TierType[] = ['wood', 'iron', 'steel', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster']
+
 export interface UserLevel {
   id: string
   currentXp: number
@@ -52,6 +54,13 @@ export interface LevelProgress {
   nextUnlock?: FeatureUnlock
 }
 
+// XP calculations based on sustainable progression:
+// Level 1: 2 weeks (~150 XP/day * 14 days = 2100 XP)
+// Level 2: 3 weeks (~150 XP/day * 21 days = 3150 XP)
+// Level 3: 4 weeks (~150 XP/day * 28 days = 4200 XP)
+// Each subsequent level adds 1 week (+1050 XP per level)
+// Each tier has 3 sub-levels
+
 export const TIER_INFO: Record<TierType, TierInfo> = {
   wood: {
     tier: 'wood',
@@ -61,7 +70,7 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     gradient: 'linear-gradient(135deg, #8B4513, #A0522D)',
     description: 'Just starting your focus journey',
     xpRequired: 0,
-    xpPerLevel: 100,
+    xpPerLevel: 700, // Levels 1-3: 700, 1400, 2100 XP
   },
   iron: {
     tier: 'iron',
@@ -70,8 +79,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#4A4A4A',
     gradient: 'linear-gradient(135deg, #4A4A4A, #6B6B6B)',
     description: 'Building mental strength',
-    xpRequired: 300,
-    xpPerLevel: 167,
+    xpRequired: 2100,
+    xpPerLevel: 1050, // Levels 4-6: 3150, 4200, 5250 XP
   },
   steel: {
     tier: 'steel',
@@ -80,8 +89,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#71797E',
     gradient: 'linear-gradient(135deg, #71797E, #939C9F)',
     description: 'Forging strong habits',
-    xpRequired: 800,
-    xpPerLevel: 233,
+    xpRequired: 5250,
+    xpPerLevel: 1400, // Levels 7-9: 6650, 8050, 9450 XP
   },
   bronze: {
     tier: 'bronze',
@@ -90,8 +99,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#CD7F32',
     gradient: 'linear-gradient(135deg, #CD7F32, #E5A56A)',
     description: 'Earning your stripes',
-    xpRequired: 1500,
-    xpPerLevel: 333,
+    xpRequired: 9450,
+    xpPerLevel: 2100, // Levels 10-12: 11550, 13650, 15750 XP
   },
   silver: {
     tier: 'silver',
@@ -100,8 +109,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#C0C0C0',
     gradient: 'linear-gradient(135deg, #C0C0C0, #E8E8E8)',
     description: 'Shining with consistency',
-    xpRequired: 2500,
-    xpPerLevel: 500,
+    xpRequired: 15750,
+    xpPerLevel: 2800, // Levels 13-15: 18550, 21350, 24150 XP
   },
   gold: {
     tier: 'gold',
@@ -110,8 +119,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#FFD700',
     gradient: 'linear-gradient(135deg, #FFD700, #FFF8DC)',
     description: 'Peak performance',
-    xpRequired: 4000,
-    xpPerLevel: 667,
+    xpRequired: 24150,
+    xpPerLevel: 3500, // Levels 16-18: 27650, 31150, 34650 XP
   },
   platinum: {
     tier: 'platinum',
@@ -120,8 +129,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#E5E4E2',
     gradient: 'linear-gradient(135deg, #E5E4E2, #F5F5F5)',
     description: 'Elite focus master',
-    xpRequired: 6000,
-    xpPerLevel: 1000,
+    xpRequired: 34650,
+    xpPerLevel: 4200, // Levels 19-21: 38850, 43050, 47250 XP
   },
   diamond: {
     tier: 'diamond',
@@ -130,8 +139,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#B9F2FF',
     gradient: 'linear-gradient(135deg, #B9F2FF, #00BFFF)',
     description: 'Brilliant dedication',
-    xpRequired: 9000,
-    xpPerLevel: 1333,
+    xpRequired: 47250,
+    xpPerLevel: 4900, // Levels 22-24: 52150, 57050, 61950 XP
   },
   master: {
     tier: 'master',
@@ -140,8 +149,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#9333EA',
     gradient: 'linear-gradient(135deg, #9333EA, #C084FC)',
     description: 'True mastery achieved',
-    xpRequired: 13000,
-    xpPerLevel: 1667,
+    xpRequired: 61950,
+    xpPerLevel: 5600, // Levels 25-27: 67550, 73150, 78750 XP
   },
   grandmaster: {
     tier: 'grandmaster',
@@ -150,8 +159,8 @@ export const TIER_INFO: Record<TierType, TierInfo> = {
     color: '#FF6B6B',
     gradient: 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7)',
     description: 'Legendary focus champion',
-    xpRequired: 18000,
-    xpPerLevel: 2000,
+    xpRequired: 78750,
+    xpPerLevel: 7000, // Levels 28+: progressive
   },
 }
 

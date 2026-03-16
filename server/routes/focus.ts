@@ -1,10 +1,59 @@
 import { Hono } from 'hono'
 import { eq, sql, desc, and, gte, lte, lt } from 'drizzle-orm'
 import { getDb } from '../db/index'
-import { focusLogs, focusCorrelations, habitCompletions, pomodoroSessions, tasks } from '../db/schema'
+import { focusLogs, focusCorrelations, habitCompletions, pomodoroSessions, tasks, userProfiles } from '../db/schema'
 
 type Env = { Bindings: { DB: D1Database } }
 const router = new Hono<Env>()
+
+// Helper: get user's timezone
+async function getUserTimezone(db: any): Promise<string> {
+  const profile = await db.select().from(userProfiles).where(eq(userProfiles.id, 'default-user')).get()
+  return profile?.timezone || 'UTC'
+}
+
+// Helper: get timezone-aware dates
+function getTimezoneDates(timezone: string) {
+  const timezoneOffsets: Record<string, number> = {
+    'UTC': 0,
+    'America/New_York': -5,
+    'America/Chicago': -6,
+    'America/Denver': -7,
+    'America/Los_Angeles': -8,
+    'America/Anchorage': -9,
+    'Pacific/Honolulu': -10,
+    'Europe/London': 0,
+    'Europe/Paris': 1,
+    'Europe/Berlin': 1,
+    'Europe/Moscow': 3,
+    'Asia/Dubai': 4,
+    'Asia/Kolkata': 5.5,
+    'Asia/Bangkok': 7,
+    'Asia/Singapore': 8,
+    'Asia/Hong_Kong': 8,
+    'Asia/Tokyo': 9,
+    'Asia/Seoul': 9,
+    'Australia/Sydney': 11,
+    'Australia/Melbourne': 11,
+    'Pacific/Auckland': 13,
+    'America/Sao_Paulo': -3,
+    'America/Mexico_City': -6,
+    'Africa/Cairo': 2,
+    'Africa/Johannesburg': 2,
+  }
+
+  const offset = timezoneOffsets[timezone] ?? 0
+  const now = new Date()
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
+  const localDate = new Date(utc + (3600000 * offset))
+  
+  const today = localDate.toISOString().slice(0, 10)
+  const yesterday = new Date(utc + (3600000 * offset) - 86400000).toISOString().slice(0, 10)
+  const weekAgo = new Date(utc + (3600000 * offset) - (7 * 86400000)).toISOString().slice(0, 10)
+  const monthAgo = new Date(utc + (3600000 * offset) - (30 * 86400000)).toISOString().slice(0, 10)
+  
+  return { today, yesterday, weekAgo, monthAgo }
+}
 
 // Log focus level
 router.post('/', async (c) => {
@@ -31,7 +80,8 @@ router.post('/', async (c) => {
 // Get today's focus logs
 router.get('/today', async (c) => {
   const db = getDb(c.env.DB)
-  const today = new Date().toISOString().slice(0, 10)
+  const timezone = await getUserTimezone(db)
+  const { today } = getTimezoneDates(timezone)
 
   const logs = await db.select()
     .from(focusLogs)
@@ -78,9 +128,8 @@ router.get('/daily', async (c) => {
 // Get dashboard data with correlations
 router.get('/dashboard', async (c) => {
   const db = getDb(c.env.DB)
-  const today = new Date().toISOString().slice(0, 10)
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)
-  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
+  const timezone = await getUserTimezone(db)
+  const { today, yesterday, weekAgo, monthAgo } = getTimezoneDates(timezone)
 
   // Today's logs
   const todayLogs = await db.select()
@@ -89,14 +138,13 @@ router.get('/dashboard', async (c) => {
     .orderBy(desc(focusLogs.timestamp))
 
   // Yesterday's average
-  const yesterdayStart = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
   const [yesterdayData] = await db.select({
     avgFocus: sql<number>`AVG(focus_level)`,
     logCount: sql<number>`COUNT(*)`,
   })
     .from(focusLogs)
     .where(and(
-      gte(focusLogs.timestamp, yesterdayStart),
+      gte(focusLogs.timestamp, yesterday),
       lt(focusLogs.timestamp, today)
     ))
 

@@ -10,7 +10,7 @@ import { FocusReminderSettings } from './FocusReminderSettings'
 import { useFocusReminders } from '../../hooks/useFocusReminders'
 import { FOCUS_LEVELS } from '../../types'
 
-type TimeRange = 'week' | 'month'
+type TimeRange = 'today' | 'week' | 'month'
 
 export function FocusDashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>('week')
@@ -25,10 +25,11 @@ export function FocusDashboard() {
 
   const { data: dailyData } = useQuery({
     queryKey: ['focus-daily', timeRange],
-    queryFn: () => focusApi.getDaily(timeRange === 'week' ? 7 : 30),
+    queryFn: () => focusApi.getDaily(timeRange === 'today' ? 1 : timeRange === 'week' ? 7 : 30),
   })
 
   const getTimeRangeLabel = () => {
+    if (timeRange === 'today') return 'Today'
     return timeRange === 'week' ? 'Past 7 Days' : 'Past 30 Days'
   }
 
@@ -39,6 +40,25 @@ export function FocusDashboard() {
   }
 
   const currentFocus = getCurrentFocusEmoji()
+
+  const getTodaySessions = () => {
+    if (!dashboard?.today.logs) return []
+    return dashboard.today.logs.map((log) => {
+      const focusInfo = FOCUS_LEVELS.find(f => f.level === log.focusLevel)
+      return {
+        id: log.id,
+        focusLevel: log.focusLevel,
+        label: focusInfo?.label || 'Unknown',
+        emoji: focusInfo?.emoji || '❓',
+        notes: log.notes,
+        timestamp: log.timestamp,
+      }
+    })
+  }
+
+  const todaySessions = getTodaySessions()
+  const todayAvgFocus = dashboard?.today.avgFocus || 0
+  const todayFocusLevel = currentFocus
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -145,7 +165,7 @@ export function FocusDashboard() {
         </div>
       </div>
 
-      {/* Chart Section */}
+      {/* Chart Section with Today Summary */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -153,6 +173,17 @@ export function FocusDashboard() {
             <h2 className="text-lg font-semibold text-white">Focus Trend</h2>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setTimeRange('today')}
+              className={clsx(
+                'text-xs px-3 py-1.5 rounded-lg transition-colors',
+                timeRange === 'today'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+              )}
+            >
+              Today
+            </button>
             <button
               onClick={() => setTimeRange('week')}
               className={clsx(
@@ -177,6 +208,78 @@ export function FocusDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Today's Summary Card - shown when "Today" is selected */}
+        {timeRange === 'today' && (
+          <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-2xl border border-gray-700/50 p-6 mb-4">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-brand-600/20 text-brand-400">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Today's Focus</h3>
+                  <p className="text-xs text-gray-400">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-white">{Math.round(todayAvgFocus * 10) / 10}</div>
+                <div className="text-xs text-gray-400">Average Focus</div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-900/40 rounded-xl p-4 border border-gray-700/40 text-center">
+                <div className="text-4xl mb-2">{todayFocusLevel?.emoji || '❓'}</div>
+                <div className="text-sm text-gray-400">Focus Level</div>
+                <div className="text-lg font-bold text-white mt-1">{todayFocusLevel?.label || 'Unknown'}</div>
+              </div>
+              <div className="bg-gray-900/40 rounded-xl p-4 border border-gray-700/40 text-center">
+                <div className="text-4xl mb-2">📝</div>
+                <div className="text-sm text-gray-400">Sessions</div>
+                <div className="text-lg font-bold text-white mt-1">{todaySessions.length}</div>
+              </div>
+              <div className="bg-gray-900/40 rounded-xl p-4 border border-gray-700/40 text-center">
+                <div className="text-4xl mb-2">📊</div>
+                <div className="text-sm text-gray-400">Data Points</div>
+                <div className="text-lg font-bold text-white mt-1">{dashboard?.today.logs.length || 0}</div>
+              </div>
+            </div>
+
+            {/* Today's Sessions List */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">Today's Sessions</h4>
+              {todaySessions.length > 0 ? (
+                <div className="space-y-2">
+                  {todaySessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="flex items-center gap-3 bg-gray-900/40 rounded-lg p-3 border border-gray-700/30"
+                    >
+                      <div className="text-2xl">{session.emoji}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-white">{session.label}</span>
+                          <span className="text-xs text-gray-500 shrink-0">
+                            {new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {session.notes && (
+                          <p className="text-xs text-gray-400 mt-0.5 break-words">{session.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No sessions logged today yet</p>
+              )}
+            </div>
+          </div>
+        )}
+
         <FocusChart
           data={dailyData || []}
           days={timeRange === 'week' ? 7 : 30}

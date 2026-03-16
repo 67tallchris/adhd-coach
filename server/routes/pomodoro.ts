@@ -1,11 +1,58 @@
 import { Hono } from 'hono'
 import { eq, sql, desc } from 'drizzle-orm'
 import { getDb } from '../db/index'
-import { pomodoroSessions, devices } from '../db/schema'
+import { pomodoroSessions, devices, userProfiles } from '../db/schema'
 import { sendPomodoroCompleteNotification } from '../services/fcm'
 
 type Env = { Bindings: { DB: D1Database } }
 const router = new Hono<Env>()
+
+// Helper: get user's timezone
+async function getUserTimezone(db: any): Promise<string> {
+  const profile = await db.select().from(userProfiles).where(eq(userProfiles.id, 'default-user')).get()
+  return profile?.timezone || 'UTC'
+}
+
+// Helper: get timezone-aware dates
+function getTimezoneDates(timezone: string) {
+  const timezoneOffsets: Record<string, number> = {
+    'UTC': 0,
+    'America/New_York': -5,
+    'America/Chicago': -6,
+    'America/Denver': -7,
+    'America/Los_Angeles': -8,
+    'America/Anchorage': -9,
+    'Pacific/Honolulu': -10,
+    'Europe/London': 0,
+    'Europe/Paris': 1,
+    'Europe/Berlin': 1,
+    'Europe/Moscow': 3,
+    'Asia/Dubai': 4,
+    'Asia/Kolkata': 5.5,
+    'Asia/Bangkok': 7,
+    'Asia/Singapore': 8,
+    'Asia/Hong_Kong': 8,
+    'Asia/Tokyo': 9,
+    'Asia/Seoul': 9,
+    'Australia/Sydney': 11,
+    'Australia/Melbourne': 11,
+    'Pacific/Auckland': 13,
+    'America/Sao_Paulo': -3,
+    'America/Mexico_City': -6,
+    'Africa/Cairo': 2,
+    'Africa/Johannesburg': 2,
+  }
+
+  const offset = timezoneOffsets[timezone] ?? 0
+  const now = new Date()
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
+  const localDate = new Date(utc + (3600000 * offset))
+  
+  const today = localDate.toISOString().slice(0, 10)
+  const weekAgo = new Date(utc + (3600000 * offset) - (7 * 86400000)).toISOString().slice(0, 10)
+  
+  return { today, weekAgo }
+}
 
 // List recent sessions
 router.get('/sessions', async (c) => {
@@ -78,8 +125,8 @@ router.patch('/sessions/:id', async (c) => {
 // Stats
 router.get('/stats', async (c) => {
   const db = getDb(c.env.DB)
-  const today = new Date().toISOString().slice(0, 10)
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)
+  const timezone = await getUserTimezone(db)
+  const { today, weekAgo } = getTimezoneDates(timezone)
 
   // Completed sessions
   const [todayRow] = await db.select({ count: sql<number>`count(*)` })

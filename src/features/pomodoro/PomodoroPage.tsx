@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Timer, Play, Square, RotateCcw, Settings, BellOff, Check, Flame, MessageCircle } from 'lucide-react'
+import { Timer, Play, Square, RotateCcw, Settings, BellOff, Check, MessageCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePomodoroStore } from '../../stores/pomodoroStore'
 import { pomodoroApi } from '../../api/pomodoro'
 import { useTasks } from '../brain-dump/useTasks'
-import { useQuery } from '@tanstack/react-query'
 import { BreakSuggestions } from './BreakSuggestions'
-import { StreakCard } from '../../components/StreakCard'
-import { streaksApi } from '../../api/streaks'
 import { BodyDoublingIndicator } from '../../components/BodyDoublingIndicator'
 import { useBodyDoublingStore } from '../../stores/bodyDoublingStore'
 import { DistractionModal } from './DistractionModal'
-import { DistractionInsights } from './DistractionInsights'
 import { distractionsApi } from '../../api/distractions'
 import type { DistractionAction, DistractionType } from '../../types'
 
@@ -122,118 +118,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function SessionHistory() {
-  const { data: sessions = [] } = useQuery({
-    queryKey: ['pomodoro', 'sessions'],
-    queryFn: () => pomodoroApi.list(10),
-  })
-  const { data: stats } = useQuery({
-    queryKey: ['pomodoro', 'stats'],
-    queryFn: pomodoroApi.stats,
-  })
-  const { data: streakStats } = useQuery({
-    queryKey: ['streaks', 'pomodoro'],
-    queryFn: streaksApi.getPomodoroStreak,
-    refetchInterval: 30000, // Refresh every 30s
-  })
-
-  if (sessions.length === 0 && !streakStats) return null
-
-  return (
-    <div className="mt-8">
-      {/* Streak Card */}
-      {streakStats && (
-        <div className="mb-6">
-          <StreakCard
-            stats={streakStats}
-            title="Focus Streak"
-            subtitle="Complete pomodoro sessions this week"
-            icon={<Flame className="w-5 h-5" />}
-          />
-        </div>
-      )}
-
-      {stats && (
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          {[
-            { label: 'Today', value: stats.today, sub: stats.abandonedToday ? `(${stats.abandonedToday} abandoned)` : undefined },
-            { label: 'This Week', value: stats.week, sub: stats.abandonedWeek ? `(${stats.abandonedWeek} abandoned)` : undefined },
-            { label: 'All Time', value: stats.total, sub: stats.abandonedTotal ? `(${stats.abandonedTotal} abandoned)` : undefined },
-          ].map(s => (
-            <div key={s.label} className="bg-gray-800/40 rounded-xl p-3 text-center border border-gray-700/50">
-              <p className="text-2xl font-bold text-white">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-              {s.sub && <p className="text-xs text-orange-400 mt-0.5">{s.sub}</p>}
-            </div>
-          ))}
-          <div className="bg-orange-900/20 rounded-xl p-3 text-center border border-orange-700/30">
-            <p className="text-2xl font-bold text-orange-400">{stats.abandonedTotal ?? 0}</p>
-            <p className="text-xs text-orange-500 mt-0.5">Abandoned</p>
-          </div>
-        </div>
-      )}
-
-      <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Sessions</h3>
-      <div className="space-y-2">
-        {sessions.map(session => {
-          const isCompleted = session.completedAt !== null
-          const isAbandoned = session.abandonedAt !== null
-          const actualMin = session.actualDurationMin || (isCompleted ? session.durationMin : 0)
-
-          return (
-            <div key={session.id} className={clsx(
-              'flex items-center justify-between p-3 rounded-lg border',
-              isCompleted
-                ? 'bg-green-900/10 border-green-800/30'
-                : isAbandoned
-                  ? 'bg-orange-900/10 border-orange-800/30'
-                  : 'bg-gray-800/30 border-gray-700/40'
-            )}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className={clsx(
-                    'text-sm font-medium',
-                    isCompleted ? 'text-green-300' : isAbandoned ? 'text-orange-300' : 'text-gray-300'
-                  )}>
-                    {session.durationMin} min planned
-                  </span>
-                  {isAbandoned && actualMin < session.durationMin && (
-                    <span className="text-xs text-orange-400">({actualMin} min actual)</span>
-                  )}
-                </div>
-                {session.notes && (
-                  <span className="text-xs text-gray-500 ml-1">— {session.notes}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {isCompleted ? (
-                  <span className="text-xs text-green-400 flex items-center gap-1">
-                    ✓ Completed
-                  </span>
-                ) : isAbandoned ? (
-                  <span className="text-xs text-orange-400 flex items-center gap-1">
-                    ✕ Abandoned
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-500">Incomplete</span>
-                )}
-                <span className="text-xs text-gray-600">
-                  {new Date(session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Distraction Insights */}
-      <div className="mt-8 pt-6 border-t border-gray-700/50">
-        <DistractionInsights />
       </div>
     </div>
   )
@@ -550,8 +434,6 @@ export default function PomodoroPage() {
           />
         )}
       </div>
-
-      <SessionHistory />
     </div>
   )
 }

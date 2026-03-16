@@ -12,6 +12,9 @@ import FocusPage from './features/focus/FocusPage'
 import { LevelDashboard } from './features/level/LevelDashboard'
 import { ModeSelector } from './features/level/ModeSelector'
 import { LevelUpModal } from './features/level/LevelUpModal'
+import SettingsPage from './features/settings/SettingsPage'
+import StatsPage from './features/stats/StatsPage'
+import VideoBodyDoublingPage from './features/video-body-doubling/VideoBodyDoublingPage'
 import { useLevelProgress } from './hooks/useLevelProgress'
 
 export default function App() {
@@ -33,7 +36,10 @@ export default function App() {
           <Route path="streaks" element={<StreaksPage />} />
           <Route path="nudges" element={<NudgesPage />} />
           <Route path="focus" element={<FocusPage />} />
+          <Route path="video-body-doubling" element={<VideoBodyDoublingPage />} />
+          <Route path="stats" element={<StatsPage />} />
           <Route path="progress" element={<LevelDashboard />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

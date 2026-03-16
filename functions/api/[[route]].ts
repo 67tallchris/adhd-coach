@@ -11,10 +11,12 @@ import nudgesRouter from '../../server/routes/nudges'
 import devicesRouter from '../../server/routes/devices'
 import streaksRouter from '../../server/routes/streaks'
 import bodyDoublingRouter from '../../server/routes/bodyDoubling'
+import videoBodyDoublingRouter from '../../server/routes/videoBodyDoubling'
 import laddersRouter from '../../server/routes/ladders'
 import distractionsRouter from '../../server/routes/distractions'
 import focusRouter from '../../server/routes/focus'
 import levelsRouter from '../../server/routes/levels'
+import settingsRouter from '../../server/routes/settings'
 
 type Env = {
   Bindings: {
@@ -47,9 +49,11 @@ app.route('/nudges', nudgesRouter)
 app.route('/devices', devicesRouter)
 app.route('/streaks', streaksRouter)
 app.route('/body-doubling', bodyDoublingRouter)
+app.route('/video-body-doubling', videoBodyDoublingRouter)
 app.route('/ladders', laddersRouter)
 app.route('/distractions', distractionsRouter)
 app.route('/focus', focusRouter)
 app.route('/levels', levelsRouter)
+app.route('/settings', settingsRouter)
 
 export const onRequest = handle(app)

@@ -1,18 +1,25 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, Sparkles, TrendingUp, Clock, Zap, Target, CheckSquare, Brain, Flag, Lock } from 'lucide-react'
-import clsx from 'clsx'
+import { Trophy, Sparkles, Info } from 'lucide-react'
 import { levelsApi } from '../../api/levels'
 import { TierBadge } from './TierBadge'
 import { NextUnlock } from './NextUnlock'
-import { TIER_INFO, FEATURE_UNLOCKS, XP_REWARDS, type TierType } from '../../types/levels'
+import { TIER_INFO, XP_REWARDS } from '../../types/levels'
 
-const TIER_ORDER: TierType[] = ['wood', 'iron', 'steel', 'bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster']
+function Tooltip({ children, content }: { children: React.ReactNode; content: React.ReactNode }) {
+  const [show, setShow] = useState(false)
 
-function getTierLevelRange(tierKey: TierType, index: number): { start: number; end: number | null } {
-  const start = Math.floor(TIER_INFO[tierKey].xpRequired / 100) + 1
-  const nextKey = TIER_ORDER[index + 1]
-  const end = nextKey ? Math.floor((TIER_INFO[nextKey].xpRequired - 1) / 100) + 1 : null
-  return { start, end }
+  return (
+    <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      {children}
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg border border-gray-700 shadow-xl whitespace-nowrap">
+          {content}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function LevelDashboard() {
@@ -20,11 +27,6 @@ export function LevelDashboard() {
     queryKey: ['user-level'],
     queryFn: () => levelsApi.getLevel(),
     refetchInterval: 1000 * 60, // Refresh every minute
-  })
-
-  const { data: xpHistory } = useQuery({
-    queryKey: ['xp-history'],
-    queryFn: () => levelsApi.getHistory(10),
   })
 
   if (isLoading || !level) {
@@ -42,17 +44,35 @@ export function LevelDashboard() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-2">Your Progress</h1>
-        <p className="text-sm text-gray-400">
-          Track your level, earn XP, and unlock new features
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Your Progress</h1>
+          <p className="text-sm text-gray-400">
+            Track your level and earn XP to unlock new features
+          </p>
+        </div>
+        <Tooltip
+          content={
+            <div className="space-y-1.5 text-left">
+              <div>🎯 Pomodoro: +{XP_REWARDS.pomodoro_session} XP</div>
+              <div>📝 Focus check-in: +{XP_REWARDS.focus_checkin} XP</div>
+              <div>✅ Habit: +{XP_REWARDS.habit_completion} XP</div>
+              <div>🧠 Task: +{XP_REWARDS.task_completion} XP</div>
+              <div>🔥 Daily streak: +{XP_REWARDS.daily_streak} XP</div>
+            </div>
+          }
+        >
+          <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors">
+            <Info className="w-4 h-4" />
+            <span className="text-sm font-medium">How to earn XP</span>
+          </button>
+        </Tooltip>
       </div>
 
       {/* Main Tier Display */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-3xl border border-gray-700/50 p-8">
         {/* Background glow */}
-        <div 
+        <div
           className="absolute inset-0 opacity-10"
           style={{ background: tierInfo.gradient }}
         />
@@ -73,11 +93,11 @@ export function LevelDashboard() {
             </div>
           </div>
 
-          {/* Progress Bar */}
+          {/* XP to Next Level - Simplified */}
           <div className="mb-4">
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-400">Progress to next level</span>
-              <span className="text-white font-medium">{level.tierProgress}%</span>
+            <div className="text-center mb-3">
+              <p className="text-3xl font-bold text-white">{level.xpToNextLevel}</p>
+              <p className="text-sm text-gray-400">XP needed to reach next stage</p>
             </div>
             <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
               <div
@@ -88,246 +108,48 @@ export function LevelDashboard() {
                 }}
               />
             </div>
-          </div>
-
-          {/* XP Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 text-center">
-              <Sparkles className="w-5 h-5 text-brand-400 mx-auto mb-1" />
-              <p className="text-xl font-bold text-white">{level.currentXp}</p>
-              <p className="text-xs text-gray-500">Total XP</p>
-            </div>
-            <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 text-center">
-              <TrendingUp className="w-5 h-5 text-green-400 mx-auto mb-1" />
-              <p className="text-xl font-bold text-white">{level.xpToNextLevel}</p>
-              <p className="text-xs text-gray-500">XP to next</p>
-            </div>
-            <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 text-center">
-              <Trophy className="w-5 h-5 text-yellow-400 mx-auto mb-1" />
-              <p className="text-xl font-bold text-white">{tierInfo.name}</p>
-              <p className="text-xs text-gray-500">Current tier</p>
+            <div className="flex items-center justify-between text-xs mt-2">
+              <span className="text-gray-500">Current: {level.currentXp} XP</span>
+              <span className="text-brand-400 font-medium">{level.tierProgress}% complete</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Two Column Layout */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Next Unlock */}
-        <NextUnlock />
-
-        {/* XP History */}
-        <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-gray-400" />
-            <h3 className="text-lg font-semibold text-white">Recent XP</h3>
-          </div>
-
-          {xpHistory && xpHistory.length > 0 ? (
-            <div className="space-y-2">
-              {xpHistory.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between p-3 bg-gray-900/40 rounded-lg border border-gray-700/30"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={clsx(
-                      'p-2 rounded-lg',
-                      log.source === 'pomodoro_session' ? 'bg-red-900/30 text-red-400' :
-                      log.source === 'focus_checkin' ? 'bg-brand-900/30 text-brand-400' :
-                      log.source === 'habit_completion' ? 'bg-green-900/30 text-green-400' :
-                      log.source === 'task_completion' ? 'bg-blue-900/30 text-blue-400' :
-                      'bg-purple-900/30 text-purple-400'
-                    )}>
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">{log.description}</p>
-                      <p className="text-xs text-gray-500 capitalize">{log.source.replace('_', ' ')}</p>
-                    </div>
-                  </div>
-                  <span className="text-green-400 font-bold">+{log.xpAmount} XP</span>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <Tooltip
+              content={
+                <div className="text-left">
+                  <div className="font-medium mb-1">Total XP earned</div>
+                  <div className="text-gray-400">Keep completing activities to increase!</div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 text-center py-8">No XP earned yet</p>
-          )}
-        </div>
-      </div>
-
-      {/* How to Earn XP */}
-      <div className="bg-gradient-to-br from-brand-900/20 to-purple-900/20 rounded-2xl border border-brand-700/30 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Target className="w-5 h-5 text-brand-400" />
-          <h3 className="text-lg font-semibold text-white">How to Earn XP</h3>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-800/40 rounded-xl border border-gray-700/40">
-            <div className="p-2 rounded-lg bg-red-900/30 text-red-400">
-              <Trophy className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">Complete Pomodoro</p>
-              <p className="text-xs text-gray-500">25-minute focus session</p>
-            </div>
-            <span className="text-green-400 font-bold">+{XP_REWARDS.pomodoro_session} XP</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-gray-800/40 rounded-xl border border-gray-700/40">
-            <div className="p-2 rounded-lg bg-brand-900/30 text-brand-400">
-              <Target className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">Focus Check-in</p>
-              <p className="text-xs text-gray-500">Log your focus level</p>
-            </div>
-            <span className="text-green-400 font-bold">+{XP_REWARDS.focus_checkin} XP</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-gray-800/40 rounded-xl border border-gray-700/40">
-            <div className="p-2 rounded-lg bg-green-900/30 text-green-400">
-              <CheckSquare className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">Complete Habit</p>
-              <p className="text-xs text-gray-500">Daily habit tracking</p>
-            </div>
-            <span className="text-green-400 font-bold">+{XP_REWARDS.habit_completion} XP</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-gray-800/40 rounded-xl border border-gray-700/40">
-            <div className="p-2 rounded-lg bg-blue-900/30 text-blue-400">
-              <Brain className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">Complete Task</p>
-              <p className="text-xs text-gray-500">Brain dump task done</p>
-            </div>
-            <span className="text-green-400 font-bold">+{XP_REWARDS.task_completion} XP</span>
-          </div>
-        </div>
-
-        <div className="mt-4 p-3 bg-blue-900/20 rounded-lg border border-blue-700/30">
-          <p className="text-xs text-blue-300">
-            💡 <strong>Tip:</strong> You also get +{XP_REWARDS.first_win} XP for your first session of the day
-            and bonus XP for daily streaks!
-          </p>
-        </div>
-      </div>
-
-      {/* Level Roadmap */}
-      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Flag className="w-5 h-5 text-brand-400" />
-          <h3 className="text-lg font-semibold text-white">Level Roadmap</h3>
-          <span className="text-xs text-gray-500 ml-1">— what you're building towards</span>
-        </div>
-
-        <div className="space-y-3">
-          {TIER_ORDER.map((tierKey, index) => {
-            const info = TIER_INFO[tierKey]
-            const { start, end } = getTierLevelRange(tierKey, index)
-            const isCurrentTier = level.tier === tierKey
-            const currentTierIndex = TIER_ORDER.indexOf(level.tier as TierType)
-            const isCompletedTier = index < currentTierIndex
-            const isFutureTier = index > currentTierIndex
-            const tierUnlocks = FEATURE_UNLOCKS.filter(f => f.level >= start && (end === null || f.level <= end))
-
-            return (
-              <div
-                key={tierKey}
-                className={clsx(
-                  'rounded-xl border p-4 transition-colors',
-                  isCurrentTier && 'border-brand-600/50 bg-brand-900/20',
-                  isCompletedTier && 'border-gray-700/30 bg-gray-900/20 opacity-70',
-                  isFutureTier && 'border-gray-700/20 bg-gray-900/10'
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Status indicator */}
-                  <div className={clsx(
-                    'w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm',
-                    isCompletedTier && 'bg-green-700/40 text-green-400',
-                    isCurrentTier && 'bg-brand-600/40 text-brand-300',
-                    isFutureTier && 'bg-gray-700/40 text-gray-500'
-                  )}>
-                    {isCompletedTier ? '✓' : isCurrentTier ? info.emoji : <Lock className="w-3.5 h-3.5" />}
-                  </div>
-
-                  {/* Tier info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={clsx(
-                        'font-semibold text-sm',
-                        isCompletedTier && 'text-gray-400',
-                        isCurrentTier && 'text-white',
-                        isFutureTier && 'text-gray-500'
-                      )}>
-                        {isCurrentTier ? '' : ''}{info.emoji} {info.name}
-                      </span>
-                      <span className={clsx(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        isCurrentTier ? 'bg-brand-700/40 text-brand-300' : 'bg-gray-700/40 text-gray-500'
-                      )}>
-                        Lvl {start}{end ? `–${end}` : '+'}
-                      </span>
-                      {isCurrentTier && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-700/30 text-green-400 font-medium">
-                          Current
-                        </span>
-                      )}
-                    </div>
-                    <p className={clsx(
-                      'text-xs mt-0.5',
-                      isFutureTier ? 'text-gray-600' : 'text-gray-500'
-                    )}>
-                      {info.description} · {info.xpRequired.toLocaleString()} XP to reach
-                    </p>
-
-                    {/* Feature unlocks for this tier */}
-                    {tierUnlocks.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {tierUnlocks.map(unlock => (
-                          <span
-                            key={unlock.level}
-                            className={clsx(
-                              'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border',
-                              isCompletedTier || (isCurrentTier && level.level >= unlock.level)
-                                ? 'bg-green-900/30 border-green-700/40 text-green-400'
-                                : isFutureTier || (isCurrentTier && level.level < unlock.level)
-                                ? 'bg-gray-800/60 border-gray-700/40 text-gray-500'
-                                : 'bg-gray-800/60 border-gray-700/40 text-gray-500'
-                            )}
-                          >
-                            <span>{unlock.icon}</span>
-                            <span>{unlock.feature}</span>
-                            <span className="opacity-60">Lv.{unlock.level}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Progress bar for current tier */}
-                  {isCurrentTier && (
-                    <div className="shrink-0 w-16 text-right">
-                      <p className="text-xs text-brand-400 font-bold">{level.tierProgress}%</p>
-                      <div className="h-1.5 bg-gray-700 rounded-full mt-1 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-brand-500"
-                          style={{ width: `${level.tierProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+              }
+            >
+              <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 text-center cursor-help">
+                <Sparkles className="w-5 h-5 text-brand-400 mx-auto mb-1" />
+                <p className="text-xl font-bold text-white">{level.currentXp}</p>
+                <p className="text-xs text-gray-500">Total XP</p>
               </div>
-            )
-          })}
+            </Tooltip>
+            <Tooltip
+              content={
+                <div className="text-left">
+                  <div className="font-medium mb-1">Your current tier</div>
+                  <div className="text-gray-400">{tierInfo.description}</div>
+                </div>
+              }
+            >
+              <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 text-center cursor-help">
+                <Trophy className="w-5 h-5 text-yellow-400 mx-auto mb-1" />
+                <p className="text-xl font-bold text-white">{tierInfo.name}</p>
+                <p className="text-xs text-gray-500">Current tier</p>
+              </div>
+            </Tooltip>
+          </div>
         </div>
       </div>
+
+      {/* Next Unlock */}
+      <NextUnlock />
     </div>
   )
 }

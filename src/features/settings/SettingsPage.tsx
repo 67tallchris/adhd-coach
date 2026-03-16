@@ -1,24 +1,70 @@
-import { useState } from 'react'
-import { X, Bell, Clock, Settings, Download, Smartphone } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { User, Clock, Save, Check, AlertCircle, Bell, Smartphone, Download } from 'lucide-react'
 import clsx from 'clsx'
+import { settingsApi } from '../../api/settings'
 import { useFocusReminders } from '../../hooks/useFocusReminders'
 import { usePWA, useServiceWorker } from '../../hooks/usePWA'
 
-interface FocusReminderSettingsProps {
-  onClose: () => void
-}
+export default function SettingsPage() {
+  const queryClient = useQueryClient()
+  const [displayName, setDisplayName] = useState<string>('')
+  const [timezone, setTimezone] = useState<string>('UTC')
+  const [saved, setSaved] = useState(false)
 
-export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
-  const { config, updateConfig } = useFocusReminders()
+  // Focus reminders state
+  const { config: focusConfig, updateConfig } = useFocusReminders()
   const { isInstalled, promptInstall, browserInfo, hasPrompt } = usePWA()
   const { notificationPermission, requestNotificationPermission, scheduleFocusReminders } = useServiceWorker()
-  const [localConfig, setLocalConfig] = useState(config)
-  const [showInstructions, setShowInstructions] = useState(false)
+  const [localFocusConfig, setLocalFocusConfig] = useState(focusConfig)
+  const [showInstallInstructions, setShowInstallInstructions] = useState(false)
+  const [focusRemindersSaved, setFocusRemindersSaved] = useState(false)
 
-  const handleSave = async () => {
-    updateConfig(localConfig)
-    await scheduleFocusReminders(localConfig.enabled)
-    onClose()
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => settingsApi.getProfile(),
+  })
+
+  const { data: timezones } = useQuery({
+    queryKey: ['timezones'],
+    queryFn: () => settingsApi.getTimezones(),
+  })
+
+  // Initialize form values when profile loads
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || '')
+      setTimezone(profile.timezone || 'UTC')
+    }
+  }, [profile])
+
+  // Sync focus config
+  useEffect(() => {
+    setLocalFocusConfig(focusConfig)
+  }, [focusConfig])
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { displayName?: string | null; timezone?: string }) =>
+      settingsApi.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    },
+  })
+
+  const handleSave = () => {
+    updateProfileMutation.mutate({
+      displayName: displayName.trim() || null,
+      timezone,
+    })
+  }
+
+  const handleSaveFocusReminders = async () => {
+    updateConfig(localFocusConfig)
+    await scheduleFocusReminders(localFocusConfig.enabled)
+    setFocusRemindersSaved(true)
+    setTimeout(() => setFocusRemindersSaved(false), 2000)
   }
 
   const handleEnableNotifications = async () => {
@@ -31,9 +77,20 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
   const handleInstallClick = async () => {
     const success = await promptInstall()
     if (!success) {
-      // If programmatic install failed, show manual instructions
-      setShowInstructions(true)
+      setShowInstallInstructions(true)
     }
+  }
+
+  if (isLoadingProfile) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-800/40 rounded-lg w-1/3"></div>
+          <div className="h-32 bg-gray-800/40 rounded-2xl"></div>
+          <div className="h-32 bg-gray-800/40 rounded-2xl"></div>
+        </div>
+      </div>
+    )
   }
 
   const timeOptions = Array.from({ length: 24 }, (_, i) => ({
@@ -53,22 +110,75 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand-600/20 text-brand-400">
-              <Bell className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Focus Reminders</h3>
-              <p className="text-xs text-gray-400">Get gentle nudges to log your focus</p>
-            </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-white mb-2">Settings</h1>
+        <p className="text-sm text-gray-400">
+          Customize your experience
+        </p>
+      </div>
+
+      {/* Profile Section */}
+      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <User className="w-5 h-5 text-brand-400" />
+          <h2 className="text-lg font-semibold text-white">Profile</h2>
+        </div>
+
+        <div className="space-y-4">
+          {/* Display Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Display Name
+            </label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your name"
+              className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors"
+            />
+            <p className="text-xs text-gray-500 mt-1.5">
+              This name will be shown throughout the app
+            </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+        </div>
+      </div>
+
+      {/* Timezone Section */}
+      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Clock className="w-5 h-5 text-brand-400" />
+          <h2 className="text-lg font-semibold text-white">Time & Date</h2>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Timezone
+          </label>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors appearance-none cursor-pointer"
+          >
+            {timezones?.map((tz) => (
+              <option key={tz.value} value={tz.value}>
+                {tz.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1.5">
+            Your timezone is used for daily streaks and time-based features
+          </p>
+        </div>
+      </div>
+
+      {/* Focus Reminders Section */}
+      <div className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Bell className="w-5 h-5 text-brand-400" />
+          <h2 className="text-lg font-semibold text-white">Focus Reminders</h2>
         </div>
 
         {/* PWA Installation Banner */}
@@ -86,12 +196,12 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
               </div>
             </div>
             
-            {showInstructions && browserInfo ? (
+            {showInstallInstructions && browserInfo ? (
               <div className="mt-3 p-3 bg-gray-900/50 rounded-lg border border-gray-700/40">
                 <p className="text-xs text-gray-300 font-medium mb-2">📱 Install on {browserInfo.name}:</p>
                 <p className="text-xs text-gray-400">{browserInfo.installInstructions}</p>
                 <button
-                  onClick={() => setShowInstructions(false)}
+                  onClick={() => setShowInstallInstructions(false)}
                   className="mt-2 text-xs text-brand-400 hover:text-brand-300"
                 >
                   Dismiss
@@ -149,20 +259,19 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
         {/* Enable/Disable Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-gray-400" />
             <span className="text-sm font-medium text-white">Enable Reminders</span>
           </div>
           <button
-            onClick={() => setLocalConfig({ ...localConfig, enabled: !localConfig.enabled })}
+            onClick={() => setLocalFocusConfig({ ...localFocusConfig, enabled: !localFocusConfig.enabled })}
             className={clsx(
               'relative w-12 h-6 rounded-full transition-colors',
-              localConfig.enabled ? 'bg-brand-600' : 'bg-gray-700'
+              localFocusConfig.enabled ? 'bg-brand-600' : 'bg-gray-700'
             )}
           >
             <div
               className={clsx(
                 'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
-                localConfig.enabled ? 'left-7' : 'left-1'
+                localFocusConfig.enabled ? 'left-7' : 'left-1'
               )}
             />
           </button>
@@ -176,9 +285,9 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
               Start Time
             </label>
             <select
-              value={localConfig.startTime}
-              onChange={(e) => setLocalConfig({ ...localConfig, startTime: parseInt(e.target.value, 10) })}
-              disabled={!localConfig.enabled}
+              value={localFocusConfig.startTime}
+              onChange={(e) => setLocalFocusConfig({ ...localFocusConfig, startTime: parseInt(e.target.value, 10) })}
+              disabled={!localFocusConfig.enabled}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-600 disabled:opacity-50"
             >
               {timeOptions.map((opt) => (
@@ -195,9 +304,9 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
               End Time
             </label>
             <select
-              value={localConfig.endTime}
-              onChange={(e) => setLocalConfig({ ...localConfig, endTime: parseInt(e.target.value, 10) })}
-              disabled={!localConfig.enabled}
+              value={localFocusConfig.endTime}
+              onChange={(e) => setLocalFocusConfig({ ...localFocusConfig, endTime: parseInt(e.target.value, 10) })}
+              disabled={!localFocusConfig.enabled}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-600 disabled:opacity-50"
             >
               {timeOptions.map((opt) => (
@@ -214,9 +323,9 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
           <div>
             <label className="text-xs text-gray-400 mb-2 block">Minimum Interval</label>
             <select
-              value={localConfig.minIntervalMinutes}
-              onChange={(e) => setLocalConfig({ ...localConfig, minIntervalMinutes: parseInt(e.target.value, 10) })}
-              disabled={!localConfig.enabled}
+              value={localFocusConfig.minIntervalMinutes}
+              onChange={(e) => setLocalFocusConfig({ ...localFocusConfig, minIntervalMinutes: parseInt(e.target.value, 10) })}
+              disabled={!localFocusConfig.enabled}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-600 disabled:opacity-50"
             >
               {intervalOptions.map((opt) => (
@@ -230,9 +339,9 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
           <div>
             <label className="text-xs text-gray-400 mb-2 block">Maximum Interval</label>
             <select
-              value={localConfig.maxIntervalMinutes}
-              onChange={(e) => setLocalConfig({ ...localConfig, maxIntervalMinutes: parseInt(e.target.value, 10) })}
-              disabled={!localConfig.enabled}
+              value={localFocusConfig.maxIntervalMinutes}
+              onChange={(e) => setLocalFocusConfig({ ...localFocusConfig, maxIntervalMinutes: parseInt(e.target.value, 10) })}
+              disabled={!localFocusConfig.enabled}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-600 disabled:opacity-50"
             >
               {intervalOptions.map((opt) => (
@@ -250,23 +359,43 @@ export function FocusReminderSettings({ onClose }: FocusReminderSettingsProps) {
             💡 Reminders are randomized between the min and max intervals to keep them unpredictable and less annoying.
           </p>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors text-sm font-medium"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!localConfig.enabled && notificationPermission !== 'granted'}
-            className="flex-1 py-2.5 rounded-xl bg-brand-600 text-white hover:bg-brand-500 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Save Settings
-          </button>
-        </div>
+      {/* Save Buttons */}
+      <div className="flex items-center justify-end gap-3">
+        {saved && (
+          <div className="flex items-center gap-1.5 text-green-400 text-sm">
+            <Check className="w-4 h-4" />
+            <span>Profile saved!</span>
+          </div>
+        )}
+        {focusRemindersSaved && (
+          <div className="flex items-center gap-1.5 text-green-400 text-sm">
+            <Check className="w-4 h-4" />
+            <span>Reminders saved!</span>
+          </div>
+        )}
+        {updateProfileMutation.isError && (
+          <div className="flex items-center gap-1.5 text-red-400 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            <span>Failed to save</span>
+          </div>
+        )}
+        <button
+          onClick={handleSave}
+          disabled={updateProfileMutation.isPending}
+          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:bg-brand-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+        >
+          <Save className="w-4 h-4" />
+          {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+        </button>
+        <button
+          onClick={handleSaveFocusReminders}
+          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded-lg transition-colors"
+        >
+          <Bell className="w-4 h-4" />
+          Save Reminders
+        </button>
       </div>
     </div>
   )
