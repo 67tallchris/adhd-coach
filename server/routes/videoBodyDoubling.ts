@@ -40,7 +40,7 @@ async function cleanupStaleSessions(db: ReturnType<typeof getDb>) {
     .set({ isActive: false })
     .where(
       and(
-        gt(videoBodyDoublingSessions.lastActivityAt, staleThreshold),
+        lt(videoBodyDoublingSessions.lastActivityAt, staleThreshold),
         eq(videoBodyDoublingSessions.isActive, true)
       )
     )
@@ -89,7 +89,7 @@ router.post('/sessions/:sessionId/join', async (c) => {
   const body = await c.req.json<{
     displayName?: string
     jitsiParticipantId?: string
-  }>()
+  }>().catch(() => ({} as { displayName?: string; jitsiParticipantId?: string }))
 
   const now = new Date().toISOString()
 
@@ -142,7 +142,7 @@ router.post('/sessions/:sessionId/leave', async (c) => {
   const sessionId = c.req.param('sessionId')
   const body = await c.req.json<{
     jitsiParticipantId?: string
-  }>()
+  }>().catch(() => ({} as { jitsiParticipantId?: string }))
 
   const now = new Date().toISOString()
 
@@ -169,6 +169,13 @@ router.post('/sessions/:sessionId/leave', async (c) => {
     })
     .where(eq(videoBodyDoublingSessions.id, sessionId))
     .returning()
+
+  // If no participants remain, close the session
+  if (updatedSession && updatedSession.participantCount === 0) {
+    await db.update(videoBodyDoublingSessions)
+      .set({ isActive: false })
+      .where(eq(videoBodyDoublingSessions.id, sessionId))
+  }
 
   return c.json({
     ok: true,
@@ -208,6 +215,7 @@ router.get('/sessions/active', async (c) => {
       participantCount: s.participantCount,
       tags: JSON.parse(s.tags || '[]'),
       description: s.description,
+      createdAt: s.createdAt,
     })),
   })
 })
@@ -411,7 +419,7 @@ router.post('/announcements/:announcementId/start', async (c) => {
   const announcementId = c.req.param('announcementId')
   const body = await c.req.json<{
     startedBy?: string
-  }>()
+  }>().catch(() => ({} as { startedBy?: string }))
 
   const [announcement] = await db.select()
     .from(videoBodyDoublingAnnouncements)
@@ -467,7 +475,7 @@ router.post('/announcements/:announcementId/join', async (c) => {
   const body = await c.req.json<{
     displayName?: string
     jitsiParticipantId?: string
-  }>()
+  }>().catch(() => ({} as { displayName?: string; jitsiParticipantId?: string }))
 
   const now = new Date()
 
@@ -547,6 +555,50 @@ router.post('/announcements/:announcementId/join', async (c) => {
   })
 })
 
+// Get active announcements (waiting or active)
+router.get('/announcements/active', async (c) => {
+  const db = getDb(c.env.DB)
+  const now = new Date().toISOString()
+
+  // Clean up expired waiting announcements
+  await db.update(videoBodyDoublingAnnouncements)
+    .set({ status: 'expired' })
+    .where(
+      and(
+        eq(videoBodyDoublingAnnouncements.status, 'waiting'),
+        lt(videoBodyDoublingAnnouncements.waitUntil, now)
+      )
+    )
+
+  // Get active announcements with session room name
+  const announcements = await db
+    .select({
+      id: videoBodyDoublingAnnouncements.id,
+      sessionId: videoBodyDoublingAnnouncements.sessionId,
+      status: videoBodyDoublingAnnouncements.status,
+      interestedCount: videoBodyDoublingAnnouncements.interestedCount,
+      joinedCount: videoBodyDoublingAnnouncements.joinedCount,
+      waitUntil: videoBodyDoublingAnnouncements.waitUntil,
+      lateJoinUntil: videoBodyDoublingAnnouncements.lateJoinUntil,
+      sessionDurationMin: videoBodyDoublingAnnouncements.sessionDurationMin,
+      createdAt: videoBodyDoublingAnnouncements.createdAt,
+      roomName: videoBodyDoublingSessions.roomName,
+      description: videoBodyDoublingSessions.description,
+    })
+    .from(videoBodyDoublingAnnouncements)
+    .leftJoin(videoBodyDoublingSessions, eq(videoBodyDoublingAnnouncements.sessionId, videoBodyDoublingSessions.id))
+    .where(
+      or(
+        eq(videoBodyDoublingAnnouncements.status, 'waiting'),
+        eq(videoBodyDoublingAnnouncements.status, 'active')
+      )
+    )
+    .orderBy(desc(videoBodyDoublingAnnouncements.createdAt))
+    .limit(20)
+
+  return c.json({ announcements })
+})
+
 // Get announcement details
 router.get('/announcements/:announcementId', async (c) => {
   const db = getDb(c.env.DB)
@@ -588,48 +640,6 @@ router.get('/announcements/:announcementId', async (c) => {
       session,
       participants,
     },
-  })
-})
-
-// Get active announcements (waiting or active)
-router.get('/announcements/active', async (c) => {
-  const db = getDb(c.env.DB)
-  const now = new Date().toISOString()
-
-  // Clean up expired waiting announcements
-  await db.update(videoBodyDoublingAnnouncements)
-    .set({ status: 'expired' })
-    .where(
-      and(
-        eq(videoBodyDoublingAnnouncements.status, 'waiting'),
-        lt(videoBodyDoublingAnnouncements.waitUntil, now)
-      )
-    )
-
-  // Get active announcements
-  const announcements = await db.select()
-    .from(videoBodyDoublingAnnouncements)
-    .where(
-      or(
-        eq(videoBodyDoublingAnnouncements.status, 'waiting'),
-        eq(videoBodyDoublingAnnouncements.status, 'active')
-      )
-    )
-    .orderBy(desc(videoBodyDoublingAnnouncements.createdAt))
-    .limit(20)
-
-  return c.json({
-    announcements: announcements.map(a => ({
-      id: a.id,
-      sessionId: a.sessionId,
-      status: a.status,
-      interestedCount: a.interestedCount,
-      joinedCount: a.joinedCount,
-      waitUntil: a.waitUntil,
-      lateJoinUntil: a.lateJoinUntil,
-      sessionDurationMin: a.sessionDurationMin,
-      createdAt: a.createdAt,
-    })),
   })
 })
 

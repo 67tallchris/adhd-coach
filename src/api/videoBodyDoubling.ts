@@ -16,6 +16,7 @@ export interface ActiveSessionSummary {
   participantCount: number
   tags?: string[]
   description?: string
+  createdAt: string
 }
 
 export interface VideoAnnouncement {
@@ -28,6 +29,8 @@ export interface VideoAnnouncement {
   lateJoinUntil: string
   sessionDurationMin: number
   createdAt: string
+  roomName?: string
+  description?: string
 }
 
 export interface CreateAnnouncementResponse {

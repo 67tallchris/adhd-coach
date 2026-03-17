@@ -6,6 +6,7 @@ interface VideoBodyDoublingState {
   currentSession: VideoSession | null
   jitsiRoomId: string | null
   isInMeeting: boolean
+  isInSession: boolean
   isLoading: boolean
   error: string | null
 
@@ -21,6 +22,7 @@ export const useVideoBodyDoublingStore = create<VideoBodyDoublingState>((set, ge
   currentSession: null,
   jitsiRoomId: null,
   isInMeeting: false,
+  isInSession: false,
   isLoading: false,
   error: null,
 
@@ -51,6 +53,7 @@ export const useVideoBodyDoublingStore = create<VideoBodyDoublingState>((set, ge
       set({
         currentSession: response.session,
         jitsiRoomId: response.jitsiRoomId,
+        isInSession: true,
         isLoading: false,
       })
     } catch (error) {
@@ -69,7 +72,7 @@ export const useVideoBodyDoublingStore = create<VideoBodyDoublingState>((set, ge
     } catch (error) {
       console.error('Failed to leave session:', error)
     } finally {
-      set({ currentSession: null, jitsiRoomId: null, isInMeeting: false })
+      set({ currentSession: null, jitsiRoomId: null, isInMeeting: false, isInSession: false })
     }
   },
 

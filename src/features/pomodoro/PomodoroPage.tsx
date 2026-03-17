@@ -6,8 +6,6 @@ import { usePomodoroStore } from '../../stores/pomodoroStore'
 import { pomodoroApi } from '../../api/pomodoro'
 import { useTasks } from '../brain-dump/useTasks'
 import { BreakSuggestions } from './BreakSuggestions'
-import { BodyDoublingIndicator } from '../../components/BodyDoublingIndicator'
-import { useBodyDoublingStore } from '../../stores/bodyDoublingStore'
 import { DistractionModal } from './DistractionModal'
 import { distractionsApi } from '../../api/distractions'
 import type { DistractionAction, DistractionType } from '../../types'
@@ -133,7 +131,6 @@ export default function PomodoroPage() {
   const [isStarting, setIsStarting] = useState(false)
 
   const { settings, isBreak, sessionId } = store
-  const bodyDoubling = useBodyDoublingStore()
 
   // Calculate time remaining for display
   const timeRemaining = store.isRunning && !isBreak
@@ -182,28 +179,6 @@ export default function PomodoroPage() {
       store.reset()
     }
   }
-
-  // Sync body doubling task type with pomodoro state
-  useEffect(() => {
-    if (bodyDoubling.isEnabled && bodyDoubling.sessionId) {
-      const newTaskType = isBreak ? 'break' : 'work'
-      if (bodyDoubling.currentTaskType !== newTaskType) {
-        bodyDoubling.updateTaskType(newTaskType)
-      }
-    }
-  }, [isBreak, bodyDoubling.isEnabled, bodyDoubling.sessionId])
-
-  // Start/stop heartbeat based on body doubling enabled state
-  useEffect(() => {
-    if (bodyDoubling.isEnabled) {
-      bodyDoubling.startHeartbeat()
-    } else {
-      bodyDoubling.stopHeartbeat()
-    }
-    return () => {
-      bodyDoubling.stopHeartbeat()
-    }
-  }, [bodyDoubling.isEnabled])
 
   // Keyboard shortcut for distraction modal (D key)
   useEffect(() => {
@@ -287,11 +262,6 @@ export default function PomodoroPage() {
           timeRemaining={timeRemaining}
         />
       )}
-
-      {/* Body Doubling */}
-      <div className="mb-6">
-        <BodyDoublingIndicator />
-      </div>
 
       <div className="mb-6">
         <div className="flex items-center justify-between">

@@ -174,6 +174,3 @@ export function SessionNotification({
     </div>
   )
 }
-
-// Add Clock icon import
-import { Clock } from 'lucide-react'

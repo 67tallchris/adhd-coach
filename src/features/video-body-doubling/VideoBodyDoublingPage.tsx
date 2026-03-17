@@ -1,11 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Video, Users, Plus, Copy, Check, Clock, Zap, Brain, Coffee, X, Radio } from 'lucide-react'
+import clsx from 'clsx'
+
+const JOIN_WINDOW_SEC = 5 * 60 // 5 minutes
+
+function SessionTimer({ createdAt }: { createdAt: string }) {
+  const getElapsed = useCallback(
+    () => Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 1000)),
+    [createdAt]
+  )
+  const [elapsed, setElapsed] = useState(getElapsed)
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(getElapsed()), 1000)
+    return () => clearInterval(id)
+  }, [getElapsed])
+
+  const mins = Math.floor(elapsed / 60)
+  const secs = elapsed % 60
+  const open = elapsed < JOIN_WINDOW_SEC
+
+  return (
+    <span className={clsx('text-xs flex items-center gap-1 font-mono', open ? 'text-green-400' : 'text-amber-400')}>
+      <Clock className="w-3 h-3" />
+      {mins}:{secs.toString().padStart(2, '0')}
+      <span className="font-sans ml-0.5">{open ? '· Open' : '· Late'}</span>
+    </span>
+  )
+}
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { JitsiMeeting } from '../../components/JitsiMeeting'
 import { useVideoBodyDoublingStore } from '../../stores/videoBodyDoublingStore'
 import { videoBodyDoublingApi, type VideoAnnouncement } from '../../api/videoBodyDoubling'
 import { WaitingRoom } from './WaitingRoom'
-import { SessionNotification } from './SessionNotification'
 
 export default function VideoBodyDoublingPage() {
   const qc = useQueryClient()
@@ -30,11 +57,6 @@ export default function VideoBodyDoublingPage() {
   const [announcementRoomName, setAnnouncementRoomName] = useState('')
   const [announcementDescription, setAnnouncementDescription] = useState('')
 
-  // Notification state
-  const [showNotification, setShowNotification] = useState<(VideoAnnouncement & {
-    session: { roomName: string; description?: string }
-  }) | null>(null)
-
   // UI state
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
@@ -55,22 +77,6 @@ export default function VideoBodyDoublingPage() {
     queryFn: () => videoBodyDoublingApi.getActiveAnnouncements(),
     refetchInterval: 5000,
   })
-
-  // Check for new announcements to notify about
-  useEffect(() => {
-    if (!announcementsData?.announcements) return
-    
-    const waitingAnnouncements = announcementsData.announcements.filter(
-      a => a.status === 'waiting'
-    )
-    
-    // Show notification for most recent waiting announcement (if not already shown)
-    if (waitingAnnouncements.length > 0 && !showNotification && !activeAnnouncement) {
-      const latest = waitingAnnouncements[0]
-      // Don't notify about own announcements
-      setShowNotification(latest as any)
-    }
-  }, [announcementsData])
 
   // Auto-join from URL parameter
   useEffect(() => {
@@ -158,19 +164,6 @@ export default function VideoBodyDoublingPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Handle joining from notification
-  const handleJoinFromNotification = async () => {
-    if (!showNotification) return
-    try {
-      await videoBodyDoublingApi.joinAnnouncement(showNotification.id)
-      setShowNotification(null)
-      // Load the announcement to get jitsi room info
-      const data = await videoBodyDoublingApi.getAnnouncement(showNotification.id)
-      setActiveAnnouncement(data.announcement as any)
-    } catch (err) {
-      console.error('Failed to join from notification:', err)
-    }
-  }
 
   // If in meeting, show only the meeting interface
   if (isInMeeting && currentSession && jitsiRoomId) {
@@ -378,15 +371,6 @@ export default function VideoBodyDoublingPage() {
         </div>
       )}
 
-      {/* Session notification */}
-      {showNotification && (
-        <SessionNotification
-          announcement={showNotification}
-          onJoin={handleJoinFromNotification}
-          onDismiss={() => setShowNotification(null)}
-        />
-      )}
-
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -539,6 +523,7 @@ export default function VideoBodyDoublingPage() {
                           <Users className="w-3 h-3" />
                           {session.participantCount} focusing
                         </span>
+                        <SessionTimer createdAt={session.createdAt} />
                       </div>
                     </div>
                   </div>
@@ -558,7 +543,13 @@ export default function VideoBodyDoublingPage() {
                     <button
                       onClick={() => handleJoinMeeting(session)}
                       disabled={isLoading}
-                      className="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
+                      className={clsx(
+                        'px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-50',
+                        (Date.now() - new Date(session.createdAt).getTime()) < JOIN_WINDOW_SEC * 1000
+                          ? 'bg-brand-600 hover:bg-brand-500'
+                          : 'bg-gray-600 hover:bg-gray-500'
+                      )}
+                      title={(Date.now() - new Date(session.createdAt).getTime()) >= JOIN_WINDOW_SEC * 1000 ? 'Session already in progress' : undefined}
                     >
                       {isLoading ? 'Joining...' : 'Join'}
                     </button>

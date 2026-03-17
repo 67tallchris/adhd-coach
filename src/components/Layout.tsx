@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Brain, CheckSquare, Target, Timer, Sparkles, GitGraph, Focus, TrendingUp, Settings, BarChart3, Video } from 'lucide-react'
 import clsx from 'clsx'
 import NudgePanel from './NudgePanel'
@@ -6,15 +6,17 @@ import QuickCapture from './QuickCapture'
 import { useAppOpen } from '../hooks/useAppOpen'
 import { LevelProgress } from '../features/level/LevelProgress'
 import { usePomodoroTicker } from '../hooks/usePomodoroTicker'
+import { useAnnouncementNotifier } from '../hooks/useAnnouncementNotifier'
+import { SessionNotification } from '../features/video-body-doubling/SessionNotification'
 
 const nav = [
   { to: '/app/brain-dump', label: 'Brain Dump', icon: Brain },
   { to: '/app/habits', label: 'Habits', icon: CheckSquare },
   { to: '/app/pomodoro', label: 'Pomodoro', icon: Timer },
+  { to: '/app/video-body-doubling', label: 'Body Doubling', icon: Video },
   { to: '/app/goals', label: 'Goals', icon: Target },
   { to: '/app/ladders', label: 'Ladders', icon: GitGraph },
   { to: '/app/focus', label: 'Focus', icon: Focus },
-  { to: '/app/video-body-doubling', label: 'Video Doubling', icon: Video },
   { to: '/app/stats', label: 'Stats', icon: BarChart3 },
   { to: '/app/progress', label: 'Progress', icon: TrendingUp },
   { to: '/app/nudges', label: 'Nudge History', icon: Sparkles },
@@ -28,6 +30,11 @@ export default function Layout() {
   useAppOpen()
   usePomodoroTicker()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { announcement: bdAnnouncement, dismiss: dismissBD } = useAnnouncementNotifier()
+
+  // Don't show the in-app toast if user is already on the body doubling page
+  const showBDToast = bdAnnouncement && !location.pathname.includes('video-body-doubling')
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -96,6 +103,17 @@ export default function Layout() {
       </main>
 
       <QuickCapture />
+
+      {showBDToast && (
+        <SessionNotification
+          announcement={bdAnnouncement}
+          onJoin={() => {
+            dismissBD()
+            navigate('/app/video-body-doubling')
+          }}
+          onDismiss={dismissBD}
+        />
+      )}
     </div>
   )
 }
