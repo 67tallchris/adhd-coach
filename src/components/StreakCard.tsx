@@ -139,64 +139,65 @@ export function StreakCard({
   }, [stats.milestones])
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-2xl border border-gray-700/50 p-5 overflow-hidden">
+    <div className="relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-2xl border border-gray-700/50 p-4 sm:p-5 overflow-hidden">
       <Celebration show={justUnlocked} />
 
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-600/20 text-brand-400">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-brand-600/20 text-brand-400 shrink-0">
             {icon}
           </div>
-          <div>
-            <h3 className="text-base font-semibold text-white">{title}</h3>
-            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-semibold text-white truncate">{title}</h3>
+            {subtitle && <p className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>}
           </div>
         </div>
 
         {stats.isOnTrack && (
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-900/30 border border-green-700/30 text-green-400 text-xs font-medium">
-            <Target className="w-3.5 h-3.5" />
-            On track!
+          <span className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-green-900/30 border border-green-700/30 text-green-400 text-xs font-medium shrink-0 whitespace-nowrap">
+            <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="hidden sm:inline">On track!</span>
+            <span className="sm:hidden">On track</span>
           </span>
         )}
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 sm:gap-6">
         {/* Progress ring */}
-        <ProgressRing progress={stats.progress} color={progressColor}>
+        <ProgressRing progress={stats.progress} size={100} color={progressColor}>
           <div className="text-center">
-            <div className="text-2xl font-bold text-white">{Math.round(stats.progress)}%</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{Math.round(stats.progress)}%</div>
             <div className="text-xs text-gray-500">of goal</div>
           </div>
         </ProgressRing>
 
         {/* Stats */}
-        <div className="flex-1 grid grid-cols-2 gap-3">
-          <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40">
-            <div className="flex items-center gap-2 text-orange-400 mb-1">
-              <Flame className="w-4 h-4" />
+        <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="bg-gray-800/40 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-gray-700/40">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-orange-400 mb-1">
+              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs font-medium">This Week</span>
             </div>
-            <div className="text-xl font-bold text-white">{stats.currentStreak}</div>
+            <div className="text-lg sm:text-xl font-bold text-white">{stats.currentStreak}</div>
             <div className="text-xs text-gray-500">of {stats.weeklyGoal} goal</div>
           </div>
 
-          <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40">
-            <div className="flex items-center gap-2 text-yellow-400 mb-1">
-              <Trophy className="w-4 h-4" />
+          <div className="bg-gray-800/40 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-gray-700/40">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-yellow-400 mb-1">
+              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs font-medium">Best Week</span>
             </div>
-            <div className="text-xl font-bold text-white">{stats.bestStreak}</div>
+            <div className="text-lg sm:text-xl font-bold text-white">{stats.bestStreak}</div>
             <div className="text-xs text-gray-500">Personal record</div>
           </div>
 
-          <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/40 col-span-2">
-            <div className="flex items-center gap-2 text-blue-400 mb-1">
-              <Target className="w-4 h-4" />
+          <div className="bg-gray-800/40 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-gray-700/40 col-span-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-blue-400 mb-1">
+              <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs font-medium">All Time</span>
             </div>
-            <div className="text-xl font-bold text-white">{stats.totalSessions.toLocaleString()}</div>
-            <div className="text-xs text-gray-500">
+            <div className="text-lg sm:text-xl font-bold text-white">{stats.totalSessions.toLocaleString()}</div>
+            <div className="text-xs text-gray-500 truncate">
               {stats.lastWeekCount > 0 && `Last week: ${stats.lastWeekCount}`}
               {stats.lastWeekCount === 0 && 'Total sessions completed'}
             </div>
@@ -206,9 +207,9 @@ export function StreakCard({
 
       {/* Milestones */}
       {showMilestones && stats.milestones.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-gray-700/50">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Milestones</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-gray-700/50">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 sm:mb-3">Milestones</p>
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {stats.milestones.map((milestone) => (
               <MilestoneBadge key={milestone.sessions} milestone={milestone} />
             ))}

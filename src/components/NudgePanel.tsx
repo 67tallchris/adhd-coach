@@ -40,13 +40,13 @@ export default function NudgePanel() {
 
   return (
     <div className={clsx(
-      'mb-6 rounded-xl border border-brand-800/50 bg-brand-950/40 p-4',
+      'mb-4 sm:mb-6 rounded-xl border border-brand-800/50 bg-brand-950/40 p-3 sm:p-4',
       'relative overflow-hidden',
     )}>
       <div className="absolute inset-0 bg-gradient-to-r from-brand-900/20 to-transparent pointer-events-none" />
-      <div className="relative flex items-start gap-3">
+      <div className="relative flex items-start gap-2 sm:gap-3">
         <div className="mt-0.5 rounded-lg bg-brand-800/50 p-1.5 shrink-0">
-          <Brain className="w-4 h-4 text-brand-300" />
+          <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-300" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-brand-400 mb-1">Your coach says</p>
@@ -62,7 +62,7 @@ export default function NudgePanel() {
             <p className="text-sm text-gray-500 italic">No nudge yet — add some tasks or habits to get started.</p>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <button
             onClick={handleRefresh}
             disabled={generateMutation.isPending}

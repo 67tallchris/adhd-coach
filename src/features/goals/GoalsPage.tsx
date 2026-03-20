@@ -15,14 +15,14 @@ function GoalCard({ goal }: { goal: Goal }) {
   const updateGoal = useUpdateGoal()
 
   return (
-    <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-100">{goal.title}</h3>
+          <h3 className="font-medium text-gray-100 text-sm sm:text-base">{goal.title}</h3>
           {goal.description && (
             <p className="text-sm text-gray-400 mt-1">{goal.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-2 sm:gap-3 mt-2 flex-wrap">
             {goal.targetDate && (
               <span className="text-xs text-gray-500">
                 Target: {new Date(goal.targetDate).toLocaleDateString()}
@@ -74,7 +74,7 @@ function GoalForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-800/50 rounded-xl border border-gray-700 p-4 mb-4">
+    <form onSubmit={handleSubmit} className="bg-gray-800/50 rounded-xl border border-gray-700 p-3 sm:p-4 mb-3 sm:mb-4">
       <input
         value={title}
         onChange={e => setTitle(e.target.value)}
@@ -89,7 +89,7 @@ function GoalForm({ onClose }: { onClose: () => void }) {
         rows={2}
         className="w-full mt-2 bg-gray-900/50 rounded-lg border border-gray-700 p-2 text-sm text-gray-200 placeholder-gray-600 outline-none resize-none"
       />
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
         <label className="text-xs text-gray-500">Target date:</label>
         <input
           type="date"
@@ -121,21 +121,22 @@ export default function GoalsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-brand-400" />
-            Goals
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400" />
+            <span className="truncate">Goals</span>
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">Your big picture intentions</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Your big picture intentions</p>
         </div>
         {activeTab === 'active' && (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1.5 text-sm font-medium bg-brand-600 hover:bg-brand-500 text-white px-3 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium bg-brand-600 hover:bg-brand-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            New Goal
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">New Goal</span>
+            <span className="sm:hidden">New</span>
           </button>
         )}
       </div>
@@ -148,7 +149,7 @@ export default function GoalsPage() {
             key={status}
             onClick={() => setActiveTab(status)}
             className={clsx(
-              'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors',
+              'flex-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors',
               activeTab === status ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300',
             )}
           >
@@ -159,12 +160,12 @@ export default function GoalsPage() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2].map(i => <div key={i} className="h-24 bg-gray-800/40 rounded-xl animate-pulse" />)}
+          {[1, 2].map(i => <div key={i} className="h-20 sm:h-24 bg-gray-800/40 rounded-xl animate-pulse" />)}
         </div>
       ) : goals.length === 0 ? (
-        <div className="text-center py-16 text-gray-600">
-          <Target className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-gray-500">
+        <div className="text-center py-12 sm:py-16 text-gray-600">
+          <Target className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-gray-500 text-sm sm:text-base">
             {activeTab === 'active' ? 'No goals yet. What do you want to achieve?' : `No ${activeTab} goals.`}
           </p>
         </div>

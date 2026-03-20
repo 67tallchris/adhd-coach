@@ -38,10 +38,10 @@ export function LevelProgress({ onClick, compact = false }: LevelProgressProps) 
 
       {!compact && (
         <div className="flex flex-col min-w-0">
-          <span className="text-xs font-medium text-white">
+          <span className="text-xs font-medium text-white truncate">
             {tierInfo.name} {subLevel}
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 truncate">
             {level.xpToNextLevel} XP to next
           </span>
         </div>

@@ -22,10 +22,10 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Settings className="w-5 h-5" />
+      <div className="bg-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             Timer Settings
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
@@ -263,20 +263,20 @@ export default function PomodoroPage() {
         />
       )}
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Timer className="w-5 h-5 text-brand-400" />
-              Pomodoro
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+              <Timer className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400" />
+              <span className="truncate">Pomodoro</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
               {isBreak ? 'Break time' : 'Focus in 25-minute blocks'}
             </p>
           </div>
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors shrink-0"
             title="Settings"
           >
             <Settings className="w-5 h-5" />
@@ -286,7 +286,7 @@ export default function PomodoroPage() {
 
       <div className="flex flex-col items-center">
         {/* Circular timer */}
-        <div className="relative w-52 h-52 mb-6">
+        <div className="relative w-40 h-40 sm:w-52 sm:h-52 mb-4 sm:mb-6">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
             <circle cx="100" cy="100" r="90" fill="none" stroke="#1f2937" strokeWidth="8" />
             <circle
@@ -300,14 +300,14 @@ export default function PomodoroPage() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-mono font-bold text-white tabular-nums">
+            <span className="text-3xl sm:text-4xl font-mono font-bold text-white tabular-nums">
               {formatTime(store.remainingSec)}
             </span>
-            <span className="text-xs text-gray-500 mt-1">
+            <span className="text-xs text-gray-500 mt-0.5 sm:mt-1">
               {isBreak ? 'Break' : store.isRunning ? 'Focus time' : store.remainingSec < store.durationSec ? 'Paused' : 'Ready'}
             </span>
             {isBreak && (
-              <span className="text-xs text-green-400 mt-1 font-medium">
+              <span className="text-xs text-green-400 mt-0.5 sm:mt-1 font-medium">
                 Break Time
               </span>
             )}
@@ -316,11 +316,11 @@ export default function PomodoroPage() {
 
         {/* Task link - only show during work sessions */}
         {!store.isRunning && !isBreak && (
-          <div className="mb-4 w-full max-w-xs">
+          <div className="mb-3 sm:mb-4 w-full max-w-xs">
             <select
               value={store.linkedTaskId ?? ''}
               onChange={e => usePomodoroStore.setState({ linkedTaskId: e.target.value || null })}
-              className="w-full text-sm bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-gray-300 outline-none"
+              className="w-full text-sm bg-gray-800 border border-gray-700 rounded-lg sm:rounded-xl px-3 py-2 text-gray-300 outline-none"
             >
               <option value="">No task linked</option>
               {tasks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
@@ -329,32 +329,32 @@ export default function PomodoroPage() {
         )}
 
         {/* Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {!store.isRunning ? (
             <button
               onClick={handleStart}
               disabled={isStarting}
               className={clsx(
-                'flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-white transition-colors disabled:opacity-60',
+                'flex items-center gap-1.5 sm:gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-medium text-white transition-colors disabled:opacity-60',
                 isBreak ? 'bg-green-600 hover:bg-green-500' : 'bg-brand-600 hover:bg-brand-500',
               )}
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-4 h-4 sm:w-5 sm:h-5" />
               {isStarting ? 'Starting…' : isBreak ? 'Start Break' : store.remainingSec < store.durationSec ? 'Resume' : 'Start'}
             </button>
           ) : (
             <button
               onClick={handleStop}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-white bg-red-700 hover:bg-red-600 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-medium text-white bg-red-700 hover:bg-red-600 transition-colors"
             >
-              <Square className="w-5 h-5" />
-              Stop
+              <Square className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Stop</span>
             </button>
           )}
           {!store.isRunning && store.remainingSec < store.durationSec && (
             <button
               onClick={() => store.reset()}
-              className="p-3 rounded-xl text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+              className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
               title="Reset"
             >
               <RotateCcw className="w-5 h-5" />
@@ -363,7 +363,7 @@ export default function PomodoroPage() {
           {isBreak && !store.isRunning && (
             <button
               onClick={handleSkipBreak}
-              className="p-3 rounded-xl text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+              className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
               title="Skip Break"
             >
               <BellOff className="w-5 h-5" />
@@ -372,7 +372,7 @@ export default function PomodoroPage() {
         </div>
 
         {isDone && (
-          <div className="mt-4 text-green-400 font-medium animate-pulse">
+          <div className="mt-3 sm:mt-4 text-green-400 font-medium animate-pulse text-sm sm:text-base">
             {isBreak ? 'Break complete! Ready to focus?' : "Time's up! Great focus session."}
           </div>
         )}
@@ -385,11 +385,12 @@ export default function PomodoroPage() {
         {!isBreak && store.isRunning && (
           <button
             onClick={() => setShowDistractionModal(true)}
-            className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-900/20 border border-amber-700/30 transition-colors"
+            className="mt-3 sm:mt-4 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-900/20 border border-amber-700/30 transition-colors"
             title="Log a distraction (keyboard shortcut: D)"
           >
-            <MessageCircle className="w-4 h-4" />
-            Got Distracted?
+            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Got Distracted?</span>
+            <span className="sm:hidden">Distracted?</span>
           </button>
         )}
 

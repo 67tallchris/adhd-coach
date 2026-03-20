@@ -48,26 +48,26 @@ export default function QuickCapture() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg px-4">
+        <Dialog.Content className="fixed top-1/4 sm:top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg px-4">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-4 pt-4 pb-2 flex items-center gap-2 border-b border-gray-800">
+            <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2 flex items-center gap-2 border-b border-gray-800">
               <Zap className="w-4 h-4 text-brand-400" />
-              <span className="text-xs font-medium text-gray-400">Brain Dump — press Enter to save, add more</span>
-              <span className="ml-auto text-xs text-gray-600">Esc to close</span>
+              <span className="text-xs font-medium text-gray-400 truncate">Brain Dump — press Enter to save</span>
+              <span className="ml-auto text-xs text-gray-600 hidden sm:inline">Esc to close</span>
             </div>
-            <form onSubmit={handleSubmit} className="p-4">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4">
               <input
                 ref={inputRef}
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="What's on your mind?"
-                className="w-full bg-transparent text-lg text-gray-100 placeholder-gray-600 outline-none"
+                className="w-full bg-transparent text-base sm:text-lg text-gray-100 placeholder-gray-600 outline-none"
                 autoComplete="off"
               />
               {saved && (
                 <p className="mt-2 text-xs text-green-400">Captured! Type another or press Esc.</p>
               )}
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="mt-3 sm:mt-4 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}

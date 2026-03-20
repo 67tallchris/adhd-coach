@@ -263,38 +263,38 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Feature Detail Modal */}
       {expandedFeature && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setExpandedFeature(null)}
         >
-          <div 
+          <div
             className="bg-gray-900 rounded-3xl border border-gray-700 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6 flex items-center justify-between z-10">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center ${expandedFeature.color}`}>
-                  <expandedFeature.icon className="w-6 h-6" />
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 sm:p-6 flex items-center justify-between z-10">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center ${expandedFeature.color}`}>
+                  <expandedFeature.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{expandedFeature.detailedContent.title}</h3>
-                  <p className="text-sm text-gray-400">{expandedFeature.detailedContent.subtitle}</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">{expandedFeature.detailedContent.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-400">{expandedFeature.detailedContent.subtitle}</p>
                 </div>
               </div>
               <button
                 onClick={() => setExpandedFeature(null)}
                 className="p-2 text-gray-400 hover:text-white transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {expandedFeature.detailedContent.sections.map((section) => (
-                <div key={section.title} className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-5">
-                  <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                <div key={section.title} className="bg-gray-800/40 rounded-2xl border border-gray-700/40 p-4 sm:p-5">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3 flex items-center gap-2">
                     {section.title === 'The Problem' && '🎯'}
                     {section.title === 'The Problem with Retrospective Tracking' && '🎯'}
                     {section.title === 'How It Works' && '⚙️'}
@@ -307,20 +307,20 @@ export default function LandingPage() {
                     {' '}
                     {section.title}
                   </h4>
-                  <p className="text-gray-300 leading-relaxed">{section.content}</p>
+                  <p className="text-sm sm:text-gray-300 leading-relaxed text-gray-400">{section.content}</p>
                 </div>
               ))}
 
               {/* CTA */}
-              <div className="pt-4">
+              <div className="pt-2 sm:pt-4">
                 <button
                   onClick={() => {
                     setExpandedFeature(null)
                     navigate('/app/brain-dump')
                   }}
-                  className="w-full py-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 sm:py-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                 >
-                  Try {expandedFeature.detailedContent.title} <ArrowRight className="w-5 h-5" />
+                  Try {expandedFeature.detailedContent.title} <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
@@ -330,30 +330,32 @@ export default function LandingPage() {
 
       {/* Nav */}
       <header className="border-b border-gray-800/60 bg-gray-950/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-              <Brain className="w-4.5 h-4.5 text-white" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+              <Brain className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight">ADHD Coach</span>
+            <span className="font-bold text-base sm:text-lg tracking-tight">ADHD Coach</span>
           </div>
           <button
             onClick={() => navigate('/app/brain-dump')}
-            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors"
           >
-            Open App <ArrowRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Open App</span>
+            <span className="sm:hidden">Open</span>
+            <ArrowRight className="w-3.5 h-4 sm:w-4 sm:h-4" />
           </button>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="inline-flex items-center gap-2 bg-brand-900/40 border border-brand-800/50 text-brand-300 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
-          <Sparkles className="w-3.5 h-3.5" />
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12 sm:pb-20 text-center">
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-brand-900/40 border border-brand-800/50 text-brand-300 text-xs font-medium px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full mb-6 sm:mb-8">
+          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           Built for ADHD brains, by someone who gets it
         </div>
 
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-4 sm:mb-6">
           Find your{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-violet-400">
             focus and flow
@@ -362,64 +364,64 @@ export default function LandingPage() {
           on your own terms
         </h1>
 
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10">
+        <p className="text-base sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10 px-2">
           ADHD Coach is a productivity companion designed around how ADHD minds actually work —
           capturing ideas instantly, working in short sprints, building habits gradually, and
           celebrating every bit of progress.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/app/brain-dump')}
-            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-7 py-3.5 rounded-xl text-base transition-colors shadow-lg shadow-brand-900/50"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-6 sm:px-7 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base transition-colors shadow-lg shadow-brand-900/50 w-full sm:w-auto justify-center"
           >
-            Start for free <ArrowRight className="w-5 h-5" />
+            Start for free <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
-          <span className="text-sm text-gray-500">No account needed · runs in your browser</span>
+          <span className="text-xs sm:text-sm text-gray-500 text-center">No account needed · runs in your browser</span>
         </div>
 
         {/* Hero visual — fake app preview */}
-        <div className="mt-16 relative">
+        <div className="mt-10 sm:mt-16 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent z-10 pointer-events-none rounded-2xl" />
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-left shadow-2xl shadow-black/60 max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-3 h-3 rounded-full bg-red-500/60" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-              <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-              <span className="ml-3 text-xs text-gray-500 font-mono">ADHD Coach · Pomodoro</span>
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-3 sm:p-6 text-left shadow-2xl shadow-black/60 max-w-3xl mx-auto overflow-hidden">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/60" />
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500/60" />
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/60" />
+              <span className="ml-2 sm:ml-3 text-xs text-gray-500 font-mono hidden sm:inline">ADHD Coach · Pomodoro</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 bg-gray-800/60 rounded-xl p-4 border border-gray-700/50">
-                <p className="text-xs text-gray-500 mb-1">Current task</p>
-                <p className="font-medium text-white text-sm">Write project proposal draft</p>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="text-3xl font-mono font-bold text-brand-300">23:41</div>
-                  <div className="text-xs text-gray-500">Focus session #3</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="col-span-2 bg-gray-800/60 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-700/50">
+                <p className="text-xs text-gray-500 mb-0.5 sm:mb-1 hidden sm:block">Current task</p>
+                <p className="font-medium text-white text-xs sm:text-sm line-clamp-2">Write project proposal draft</p>
+                <div className="mt-2 sm:mt-3 flex items-center gap-2 sm:gap-3">
+                  <div className="text-xl sm:text-3xl font-mono font-bold text-brand-300">23:41</div>
+                  <div className="text-xs text-gray-500 hidden sm:block">Focus session #3</div>
                 </div>
-                <div className="mt-3 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div className="mt-2 sm:mt-3 h-1 sm:h-1.5 bg-gray-700 rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full" style={{ width: '55%' }} />
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <div className="bg-emerald-900/30 border border-emerald-800/30 rounded-xl p-3 text-center">
-                  <p className="text-2xl font-bold text-emerald-400">7</p>
+              <div className="flex flex-col gap-2 sm:gap-3">
+                <div className="bg-emerald-900/30 border border-emerald-800/30 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-400">7</p>
                   <p className="text-xs text-gray-500 mt-0.5">day streak</p>
                 </div>
-                <div className="bg-gray-800/60 border border-gray-700/50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1.5">Today</p>
-                  <div className="space-y-1">
+                <div className="bg-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-2 sm:p-3">
+                  <p className="text-xs text-gray-500 mb-1.5 hidden sm:block">Today</p>
+                  <div className="space-y-0.5 sm:space-y-1">
                     {['Morning walk ✓', 'Deep work ✓', 'Review tasks'].map((t, i) => (
-                      <div key={t} className="flex items-center gap-1.5 text-xs">
-                        <div className={`w-3 h-3 rounded-sm border ${i < 2 ? 'bg-brand-600 border-brand-500' : 'border-gray-600'}`} />
-                        <span className={i < 2 ? 'text-gray-300 line-through opacity-60' : 'text-gray-300'}>{t}</span>
+                      <div key={t} className="flex items-center gap-1 sm:gap-1.5 text-xs">
+                        <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm border ${i < 2 ? 'bg-brand-600 border-brand-500' : 'border-gray-600'}`} />
+                        <span className={i < 2 ? 'text-gray-300 line-through opacity-60 truncate' : 'text-gray-300 truncate'}>{t}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 bg-brand-950/60 border border-brand-900/50 rounded-xl px-4 py-3 flex items-start gap-3">
-              <Sparkles className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
+            <div className="mt-2 sm:mt-3 bg-brand-950/60 border border-brand-900/50 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-2 sm:py-3 flex items-start gap-2 sm:gap-3">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-400 shrink-0 mt-0.5" />
               <p className="text-xs text-gray-300 leading-relaxed">
                 <span className="text-brand-300 font-medium">Nice momentum!</span> You've completed 3 sessions today.
                 Your best focus window is usually mid-morning — you still have 40 minutes in it. Go for one more sprint.
@@ -430,19 +432,19 @@ export default function LandingPage() {
       </section>
 
       {/* Pain points */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-8 md:p-12">
-          <h2 className="text-2xl font-bold text-center mb-2">Sound familiar?</h2>
-          <p className="text-gray-400 text-center mb-10 max-w-xl mx-auto">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5 sm:p-8 md:p-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-2">Sound familiar?</h2>
+          <p className="text-sm sm:text-gray-400 text-center mb-8 sm:mb-10 max-w-xl mx-auto">
             ADHD Coach is built to tackle the exact friction points that make standard productivity tools fail ADHD brains.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {painPoints.map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-start gap-3 bg-gray-800/50 rounded-xl p-4 border border-gray-700/40">
-                <div className="w-8 h-8 rounded-lg bg-brand-900/60 border border-brand-800/50 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-brand-400" />
+              <div key={text} className="flex items-start gap-2.5 sm:gap-3 bg-gray-800/50 rounded-xl p-3.5 sm:p-4 border border-gray-700/40">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-900/60 border border-brand-800/50 flex items-center justify-center shrink-0">
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-400" />
                 </div>
-                <p className="text-sm text-gray-300 leading-relaxed pt-1">{text}</p>
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed pt-0.5 sm:pt-1">{text}</p>
               </div>
             ))}
           </div>
@@ -450,27 +452,27 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3">Everything your brain needs</h2>
-          <p className="text-gray-400 max-w-xl mx-auto">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="text-center mb-10 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3">Everything your brain needs</h2>
+          <p className="text-sm sm:text-gray-400 max-w-xl mx-auto px-2">
             Eight tools, one coherent system — each designed specifically for the way ADHD minds think and work.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {features.map(({ icon: Icon, name, tagline, description, color, bg, detailedContent }) => (
             <button
               key={name}
               onClick={() => setExpandedFeature({ icon: Icon, name, tagline, description, color, bg, detailedContent })}
-              className={`rounded-2xl border p-5 ${bg} flex flex-col gap-3 hover:scale-[1.02] transition-transform text-left group`}
+              className={`rounded-2xl border p-4 sm:p-5 ${bg} flex flex-col gap-2.5 sm:gap-3 hover:scale-[1.02] transition-transform text-left group`}
             >
-              <div className={`w-10 h-10 rounded-xl bg-gray-900/80 flex items-center justify-center ${color}`}>
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-900/80 flex items-center justify-center ${color}`}>
                 <Icon className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-semibold text-white text-sm">{name}</p>
-                  <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 group-hover:text-white transition-colors" />
                 </div>
                 <p className={`text-xs font-medium mt-0.5 ${color}`}>{tagline}</p>
               </div>
@@ -481,8 +483,8 @@ export default function LandingPage() {
       </section>
 
       {/* How it helps */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-3 gap-6 text-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-center">
           {[
             {
               stat: '25 min',
@@ -500,41 +502,42 @@ export default function LandingPage() {
               detail: 'Press N anywhere to dump a thought before the moment passes',
             },
           ].map(({ stat, label, detail }) => (
-            <div key={label} className="bg-gray-900/40 border border-gray-800 rounded-2xl p-8">
-              <p className="text-4xl font-extrabold text-brand-300 mb-2">{stat}</p>
-              <p className="font-semibold text-white mb-2">{label}</p>
-              <p className="text-sm text-gray-400 leading-relaxed">{detail}</p>
+            <div key={label} className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 sm:p-8">
+              <p className="text-3xl sm:text-4xl font-extrabold text-brand-300 mb-2">{stat}</p>
+              <p className="font-semibold text-white mb-2 text-sm sm:text-base">{label}</p>
+              <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{detail}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <div className="bg-gradient-to-br from-brand-950 via-gray-900 to-gray-950 border border-brand-900/60 rounded-3xl p-12 md:p-16">
-          <h2 className="text-4xl font-extrabold mb-4">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
+        <div className="bg-gradient-to-br from-brand-950 via-gray-900 to-gray-950 border border-brand-900/60 rounded-3xl p-8 sm:p-12 md:p-16">
+          <h2 className="text-2xl sm:text-4xl font-extrabold mb-3 sm:mb-4">
             Ready to find your flow?
           </h2>
-          <p className="text-gray-400 text-lg max-w-lg mx-auto mb-8">
+          <p className="text-sm sm:text-gray-400 text-sm sm:text-lg max-w-lg mx-auto mb-6 sm:mb-8 px-2">
             No sign-up, no credit card, no friction. Open the app and start where you are — right now.
           </p>
           <button
             onClick={() => navigate('/app/brain-dump')}
-            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-colors shadow-xl shadow-brand-900/60"
+            className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-lg transition-colors shadow-xl shadow-brand-900/60 w-full sm:w-auto"
           >
-            Launch ADHD Coach <ArrowRight className="w-5 h-5" />
+            Launch ADHD Coach <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800/60 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <div className="w-6 h-6 rounded bg-brand-700 flex items-center justify-center">
-              <Brain className="w-3.5 h-3.5 text-white" />
+      <footer className="border-t border-gray-800/60 py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-brand-700 flex items-center justify-center">
+              <Brain className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
             </div>
-            ADHD Coach — built with care for focus-challenged minds
+            <span className="hidden sm:inline">ADHD Coach — built with care for focus-challenged minds</span>
+            <span className="sm:hidden">ADHD Coach</span>
           </div>
           <p className="text-xs text-gray-600">
             Open source · Runs on Cloudflare Pages

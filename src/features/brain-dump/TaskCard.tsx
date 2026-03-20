@@ -51,12 +51,12 @@ export default function TaskCard({ task }: Props) {
       PRIORITY_COLORS[task.priority],
       overdue && 'ring-1 ring-red-500/50',
     )}>
-      <div className="flex items-start gap-3 p-3">
+      <div className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3">
         {/* Complete button */}
         <button
           onClick={() => completeTask.mutate(task.id)}
           disabled={completeTask.isPending}
-          className="mt-0.5 w-5 h-5 rounded-full border-2 border-gray-600 hover:border-green-500 hover:bg-green-500/20 transition-all shrink-0 flex items-center justify-center"
+          className="mt-0.5 w-6 h-6 sm:w-5 sm:h-5 rounded-full border-2 border-gray-600 hover:border-green-500 hover:bg-green-500/20 transition-all shrink-0 flex items-center justify-center"
           title="Mark complete"
         >
           {completeTask.isPending && <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" />}
@@ -83,16 +83,17 @@ export default function TaskCard({ task }: Props) {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 flex-wrap">
             {hasDueDate && (
               <span className={clsx(
-                'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-                overdue 
+                'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full whitespace-nowrap',
+                overdue
                   ? 'bg-red-900/30 text-red-400 border border-red-700/30'
                   : 'bg-brand-900/30 text-brand-400 border border-brand-700/30'
               )}>
                 <Calendar className="w-3 h-3" />
-                {formatDueDate(task.dueDate!, task.dueTime)}
+                <span className="hidden xs:inline">{formatDueDate(task.dueDate!, task.dueTime)}</span>
+                <span className="xs:hidden">{overdue ? 'Overdue' : 'Due'}</span>
                 {overdue && ' (Overdue)'}
               </span>
             )}
@@ -103,7 +104,7 @@ export default function TaskCard({ task }: Props) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity sm:flex">
           {(task.notes || tags.length > 0 || hasDueDate) && (
             <button
               onClick={() => setExpanded(!expanded)}

@@ -34,26 +34,26 @@ function WeeklyGraph() {
   const max = Math.max(total, ...days.map(d => d.count), 1)
 
   return (
-    <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-4 mb-6">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Last 7 Days</p>
-      <div className="flex items-end gap-1.5 h-20">
+    <div className="bg-gray-800/40 rounded-xl border border-gray-700/50 p-3 sm:p-4 mb-4 sm:mb-6">
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 sm:mb-3">Last 7 Days</p>
+      <div className="flex items-end gap-1 sm:gap-1.5 h-16 sm:h-20">
         {days.map(day => (
-          <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+          <div key={day.date} className="flex-1 flex flex-col items-center gap-0.5 sm:gap-1">
             <span className="text-xs text-gray-500 h-4 flex items-center">
               {day.count > 0 ? day.count : ''}
             </span>
-            <div className="w-full relative" style={{ height: '48px' }}>
-              <div className="absolute inset-x-0 bottom-0 bg-gray-700/40 rounded-sm" style={{ height: '48px' }} />
+            <div className="w-full relative" style={{ height: '40px' }}>
+              <div className="absolute inset-x-0 bottom-0 bg-gray-700/40 rounded-sm" style={{ height: '40px' }} />
               <div
                 className={clsx(
                   'absolute inset-x-0 bottom-0 rounded-sm transition-all duration-500',
                   day.isToday ? 'bg-brand-500' : 'bg-green-600/80',
                 )}
-                style={{ height: `${(day.count / max) * 48}px` }}
+                style={{ height: `${(day.count / max) * 40}px` }}
               />
             </div>
             <span className={clsx(
-              'text-xs',
+              'text-[10px] sm:text-xs',
               day.isToday ? 'text-brand-400 font-medium' : 'text-gray-600',
             )}>
               {day.label}
@@ -91,7 +91,7 @@ function HabitCard({ habit }: { habit: Habit }) {
 
   return (
     <div className={clsx(
-      'flex items-center gap-4 p-4 rounded-xl border transition-all',
+      'flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 rounded-xl border transition-all',
       habit.completedToday
         ? 'bg-green-900/10 border-green-800/40'
         : 'bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60',
@@ -100,14 +100,14 @@ function HabitCard({ habit }: { habit: Habit }) {
         onClick={toggle}
         disabled={checkHabit.isPending || uncheckHabit.isPending}
         className={clsx(
-          'w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+          'w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
           habit.completedToday
             ? 'bg-green-500 border-green-500 text-white'
             : 'border-gray-600 hover:border-green-500',
         )}
       >
         {habit.completedToday && (
-          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 16 16" fill="none">
             <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
@@ -128,10 +128,10 @@ function HabitCard({ habit }: { habit: Habit }) {
 
       <button
         onClick={() => deleteHabit.mutate(habit.id)}
-        className="p-1.5 rounded text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+        className="p-1.5 rounded text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
         title="Remove habit"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
     </div>
   )
@@ -164,7 +164,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-800/50 rounded-xl border border-gray-700 p-4 mb-4">
+    <form onSubmit={handleSubmit} className="bg-gray-800/50 rounded-xl border border-gray-700 p-3 sm:p-4 mb-3 sm:mb-4">
       <input
         value={title}
         onChange={e => setTitle(e.target.value)}
@@ -183,7 +183,7 @@ function HabitForm({ onClose }: { onClose: () => void }) {
           <select
             value={goalId}
             onChange={e => setGoalId(e.target.value)}
-            className="text-xs bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-gray-300 outline-none"
+            className="text-xs bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-gray-300 outline-none shrink-0"
           >
             <option value="">No goal</option>
             {goals.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
@@ -219,44 +219,45 @@ export default function HabitsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <CheckSquare className="w-5 h-5 text-brand-400" />
-            Habits
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400" />
+            <span className="truncate">Habits</span>
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">{today}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">{today}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 text-sm font-medium bg-brand-600 hover:bg-brand-500 text-white px-3 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium bg-brand-600 hover:bg-brand-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          New Habit
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">New Habit</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
       {/* Streak Card */}
       {streakStats && (
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <StreakCard
             stats={streakStats}
             title="Habit Streak"
             subtitle="Days with habit completions"
-            icon={<Target className="w-5 h-5" />}
+            icon={<Target className="w-4 h-4 sm:w-5 sm:h-5" />}
           />
         </div>
       )}
 
       {habits.length > 0 && (
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex-1 bg-gray-800 rounded-full h-2">
+        <div className="mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+          <div className="flex-1 bg-gray-800 rounded-full h-1.5 sm:h-2">
             <div
-              className="bg-green-500 h-2 rounded-full transition-all duration-500"
+              className="bg-green-500 h-1.5 sm:h-2 rounded-full transition-all duration-500"
               style={{ width: `${habits.length ? (completedCount / habits.length) * 100 : 0}%` }}
             />
           </div>
-          <span className="text-sm text-gray-400 shrink-0">{completedCount}/{habits.length} done</span>
+          <span className="text-xs sm:text-sm text-gray-400 shrink-0">{completedCount}/{habits.length}</span>
         </div>
       )}
 
@@ -266,13 +267,13 @@ export default function HabitsPage() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-800/40 rounded-xl animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-14 sm:h-16 bg-gray-800/40 rounded-xl animate-pulse" />)}
         </div>
       ) : habits.length === 0 ? (
-        <div className="text-center py-16 text-gray-600 group">
-          <CheckSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-gray-500">No habits yet.</p>
-          <p className="text-sm mt-1">Add daily habits you want to build.</p>
+        <div className="text-center py-12 sm:py-16 text-gray-600 group">
+          <CheckSquare className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-gray-500 text-sm sm:text-base">No habits yet.</p>
+          <p className="text-xs sm:text-sm mt-1">Add daily habits you want to build.</p>
         </div>
       ) : (
         <div className="space-y-2 group">
