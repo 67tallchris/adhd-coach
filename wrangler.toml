@@ -1,7 +1,11 @@
 name = "adhd-productivity"
+main = "src/worker.ts"
 compatibility_date = "2026-02-26"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
@@ -11,5 +15,3 @@ migrations_dir = "drizzle/migrations"
 
 # AI Provider API Keys (set via `wrangler secret put <NAME>`)
 # - ANTHROPIC_API_KEY: For Claude AI
-# - QWEN_API_KEY: For Qwen AI (DashScope or compatible endpoint)
-# - QWEN_BASE_URL: Optional custom base URL for Qwen API (defaults to DashScope)
