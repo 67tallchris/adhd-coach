@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { pomodoroApi } from '../../api/pomodoro'
 import { streaksApi } from '../../api/streaks'
 import { StreakCard } from '../../components/StreakCard'
+import { TierProgressCard } from '../../features/level/TierProgressCard'
 import type { StreakStats, HabitStreakStats } from '../../types'
 
 function Star({ className }: { className?: string }) {
@@ -470,9 +471,12 @@ export default function StatsPage() {
       case 'overview':
         return (
           <div className="space-y-8">
+            {/* Tier Progress Card */}
+            <TierProgressCard />
+
             {/* Quick Stats Summary */}
             <OverviewSummary />
-            
+
             {/* Achievements */}
             <AchievementsPanel />
           </div>
