@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { levelsApi } from '../api/levels'
 import type { UserLevelResponse } from '../api/levels'
+import type { OnboardingData } from '../types/onboarding'
 
 interface LevelState {
   level: UserLevelResponse | null
@@ -8,10 +9,12 @@ interface LevelState {
   error: string | null
   showLevelUpModal: boolean
   lastLevelUp: { oldTier: string; newTier: string } | null
+  onboardingData: OnboardingData | null
   fetchLevel: () => Promise<void>
   awardXp: (amount: number, source: string, description: string, metadata?: Record<string, any>) => Promise<UserLevelResponse | null>
   setFocusMode: (mode: 'pomodoro' | 'focus') => Promise<void>
   setShowLevelUpModal: (show: boolean) => void
+  saveOnboardingData: (data: OnboardingData) => void
 }
 
 export const useLevelStore = create<LevelState>((set) => ({
@@ -20,9 +23,14 @@ export const useLevelStore = create<LevelState>((set) => ({
   error: null,
   showLevelUpModal: false,
   lastLevelUp: null,
+  onboardingData: null,
 
   setShowLevelUpModal: (show) => {
     set({ showLevelUpModal: show })
+  },
+
+  saveOnboardingData: (data) => {
+    set({ onboardingData: data })
   },
 
   fetchLevel: async () => {
@@ -38,7 +46,7 @@ export const useLevelStore = create<LevelState>((set) => ({
   awardXp: async (amount, source, description, metadata) => {
     try {
       const result = await levelsApi.awardXp(amount, source, description, metadata)
-      
+
       // Check if level up occurred
       if (result.levelUp) {
         set({
@@ -52,7 +60,7 @@ export const useLevelStore = create<LevelState>((set) => ({
       } else {
         set({ level: result })
       }
-      
+
       return result
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to award XP' })
